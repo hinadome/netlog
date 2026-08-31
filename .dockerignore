@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+*.local
+.vercel
+.netlify
+deploy/container/certs
+deploy/container/nginx/active.conf
+deploy/container/.env.production
+coverage

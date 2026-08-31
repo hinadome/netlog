@@ -1,0 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Hosting CLI caches
+.vercel
+.netlify
+
+# VM/container deploy runtime
+deploy/container/certs/*
+!deploy/container/certs/.gitkeep
+deploy/container/nginx/active.conf
+deploy/container/.env.production
+deploy/vm/.env.production
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

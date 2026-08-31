@@ -1,0 +1,24 @@
+# HTTP-only FrontendGateway for Netlog Lens (--no-tls / ACME bootstrap)
+# Owned by deploy/vm/deploy.sh — do not use as default_server unless intentional.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN__;
+
+    root __WWW_DIR__;
+    index index.html;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root __CERTBOT_WEBROOT__;
+        default_type "text/plain";
+        allow all;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    access_log /var/log/nginx/__APP_NAME__.access.log;
+    error_log  /var/log/nginx/__APP_NAME__.error.log;
+}

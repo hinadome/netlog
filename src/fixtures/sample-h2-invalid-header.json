@@ -1,0 +1,165 @@
+{
+  "constants": {
+    "logFormatVersion": 1,
+    "timeTickOffset": 1607430365015,
+    "logEventTypes": {
+      "HTTP2_SESSION": 1,
+      "HTTP2_SESSION_INITIALIZED": 2,
+      "HTTP2_SESSION_PING": 3,
+      "HTTP2_SESSION_SEND_HEADERS": 4,
+      "HTTP2_SESSION_RECV_INVALID_HEADER": 5,
+      "HTTP2_SESSION_SEND_RST_STREAM": 6,
+      "HTTP2_SESSION_RECV_DATA": 7,
+      "HTTP2_SESSION_UPDATE_RECV_WINDOW": 8,
+      "HTTP2_SESSION_RECV_GOAWAY": 9,
+      "URL_REQUEST": 10,
+      "QUIC_SESSION": 11,
+      "QUIC_SESSION_CONNECTION_CLOSE_FRAME_RECEIVED": 12,
+      "QUIC_SESSION_CLOSED": 13,
+      "HTTP3_HEADERS_RECEIVED": 14,
+      "QUIC_SESSION_ENCRYPTION_ESTABLISHED": 15,
+      "QUIC_SESSION_CLOSE_ON_ERROR": 16
+    },
+    "logSourceType": {
+      "HTTP2_SESSION": 1,
+      "URL_REQUEST": 2,
+      "QUIC_SESSION": 3,
+      "NONE": 0
+    },
+    "logEventPhase": {
+      "PHASE_BEGIN": 0,
+      "PHASE_END": 1,
+      "PHASE_NONE": 2
+    },
+    "netError": {
+      "OK": 0,
+      "ERR_HTTP2_PROTOCOL_ERROR": -337,
+      "ERR_QUIC_PROTOCOL_ERROR": -356
+    }
+  },
+  "events": [
+    {
+      "time": "100",
+      "type": 1,
+      "source": { "id": 218, "type": 1 },
+      "phase": 0,
+      "params": { "host": "example.com", "proxy": "none" }
+    },
+    {
+      "time": "102",
+      "type": 2,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": { "source_dependency": { "id": 50, "type": 0 } }
+    },
+    {
+      "time": "110",
+      "type": 3,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": { "is_ack": false, "type": "sent", "unique_id": 2 }
+    },
+    {
+      "time": "120",
+      "type": 4,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": {
+        "headers": [
+          ":method: GET",
+          ":authority: example.com",
+          ":scheme: https",
+          ":path: /login"
+        ],
+        "stream_id": 9,
+        "fin": true,
+        "source_dependency": { "id": 487, "type": 2 }
+      }
+    },
+    {
+      "time": "130",
+      "type": 3,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": { "is_ack": true, "type": "received", "unique_id": 2 }
+    },
+    {
+      "time": "168",
+      "type": 5,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": {
+        "error": "Invalid character 0x0A in header value.",
+        "header_name": "strict-transport-security",
+        "header_value": "max-age=15768000;\n\t# includeSubDomains; preload;",
+        "stream_id": 9
+      }
+    },
+    {
+      "time": "168",
+      "type": 6,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": {
+        "description": "Could not parse Spdy Control Frame Header.",
+        "error_code": "1 (PROTOCOL_ERROR)",
+        "stream_id": 9
+      }
+    },
+    {
+      "time": "169",
+      "type": 7,
+      "source": { "id": 218, "type": 1 },
+      "phase": 2,
+      "params": { "fin": false, "size": 3460, "stream_id": 9 }
+    },
+    {
+      "time": "200",
+      "type": 10,
+      "source": { "id": 487, "type": 2 },
+      "phase": 0,
+      "params": { "url": "https://example.com/login" }
+    },
+    {
+      "time": "210",
+      "type": 10,
+      "source": { "id": 487, "type": 2 },
+      "phase": 1,
+      "params": { "net_error": -337 }
+    },
+    {
+      "time": "300",
+      "type": 11,
+      "source": { "id": 900, "type": 3 },
+      "phase": 0,
+      "params": { "host": "quic.example.com", "version": "RFCv1", "connection_id": "abcd" }
+    },
+    {
+      "time": "310",
+      "type": 14,
+      "source": { "id": 900, "type": 3 },
+      "phase": 2,
+      "params": {
+        "stream_id": 0,
+        "headers": [":method: GET", ":path: /", ":authority: quic.example.com"]
+      }
+    },
+    {
+      "time": "320",
+      "type": 12,
+      "source": { "id": 900, "type": 3 },
+      "phase": 2,
+      "params": {
+        "quic_error": "QUIC_PEER_TRANSPORT_PARAMETER_ERROR",
+        "details": "Invalid transport parameter"
+      }
+    },
+    {
+      "time": "321",
+      "type": 13,
+      "source": { "id": 900, "type": 3 },
+      "phase": 2,
+      "params": { "details": "Connection closed" }
+    }
+  ]
+}
