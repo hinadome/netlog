@@ -33,6 +33,8 @@ export interface SessionSummary {
   id: number
   protocol: 'h2' | 'h3'
   host: string
+  /** Request paths seen on streams in this session (for list filtering). */
+  paths: string[]
   proxy: string
   startTimeMs: number
   endTimeMs: number

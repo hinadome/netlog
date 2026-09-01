@@ -52,11 +52,21 @@ export interface TransferAnalysis {
   sessions: TransferSession[]
 }
 
+function collectSessionPaths(s: ProtocolSession): string[] {
+  const paths = new Set<string>()
+  for (const stream of s.streams.values()) {
+    const path = stream.path?.trim()
+    if (path) paths.add(path)
+  }
+  return [...paths].sort((a, b) => a.localeCompare(b))
+}
+
 function toSummary(s: ProtocolSession): SessionSummary {
   return {
     id: s.id,
     protocol: s.protocol,
     host: s.host,
+    paths: collectSessionPaths(s),
     proxy: s.proxy,
     startTimeMs: s.startTimeMs,
     endTimeMs: s.endTimeMs,

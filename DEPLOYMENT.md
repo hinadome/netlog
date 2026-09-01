@@ -81,7 +81,12 @@ Uses **certbot webroot** (`/var/www/certbot`), never `certbot --nginx` (avoids r
 
 ### Repeatable upgrade
 
-Re-run the **same** TLS mode command after pulling new code. Certificates are reused unless you pass `--force-self-signed` or `--force-certbot`. Use `--skip-build` to only refresh nginx/TLS while keeping `/opt/netlog/www`.
+Re-run the **same** TLS mode command after pulling new code. The script runs `npm ci` and `npm run build` by default, publishing fresh static assets to `/opt/netlog/www` (includes UI changes such as the Sessions **host/path** filter). Certificates are reused unless you pass `--force-self-signed` or `--force-certbot`. Use `--skip-build` only when you intentionally want to keep the existing `www` tree.
+
+```bash
+# Pull latest, rebuild app assets, keep TLS mode
+sudo ./deploy/vm/deploy.sh --domain netlog.example.com --self-signed
+```
 
 ### Script flags
 
@@ -147,9 +152,11 @@ Certbot runs in a one-shot container sharing the ACME webroot volume with `gatew
 
 ### Repeatable upgrade
 
+Re-run the deploy script after `git pull` to rebuild the Docker image and refresh static assets (new UI features such as Sessions host/path search). Omit `--no-build` unless you only changed nginx/TLS config.
+
 ```bash
 ./deploy/container/deploy.sh --domain netlog.example.com --self-signed
-# config-only refresh:
+# config-only refresh (keeps existing image/www):
 ./deploy/container/deploy.sh --domain netlog.example.com --self-signed --no-build
 ```
 

@@ -16,3 +16,5 @@ Quick verify (no certificates):
 sudo ./deploy/vm/deploy.sh --domain netlog.example.com --no-tls
 ./deploy/container/deploy.sh --domain netlog.example.com --no-tls
 ```
+
+**Upgrade after app changes:** re-run the deploy script (omit `--no-build` on container) so `npm run build` ships the latest UI — e.g. Sessions filter by host or path. TLS certs and `.env.production` are preserved on re-run.

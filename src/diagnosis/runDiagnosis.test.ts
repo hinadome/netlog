@@ -34,6 +34,9 @@ describe('netlog parser + diagnosis', () => {
   it('flags INVALID_HEADER and PROTOCOL_ERROR findings', () => {
     const parsed = parseNetlogJson(fixture)
     const result = runDiagnosis(parsed)
+    const summary = result.sessionSummaries.find((s) => s.host === 'example.com')
+    expect(summary?.paths).toContain('/login')
+
     const invalid = result.findings.filter((f) => f.ruleId === 'h2-invalid-header')
     expect(invalid.length).toBe(1)
     expect(invalid[0].title).toContain('strict-transport-security')

@@ -8,28 +8,32 @@ interface Props {
 }
 
 export function SessionsTable({ sessions, selectedId, onSelect }: Props) {
-  const [hostFilter, setHostFilter] = useState('')
+  const [queryFilter, setQueryFilter] = useState('')
   const [errorsOnly, setErrorsOnly] = useState(false)
   const [proto, setProto] = useState<'all' | 'h2' | 'h3'>('all')
 
   const filtered = useMemo(() => {
-    const q = hostFilter.trim().toLowerCase()
+    const q = queryFilter.trim().toLowerCase()
     return sessions.filter((s) => {
       if (errorsOnly && !s.hasError) return false
       if (proto !== 'all' && s.protocol !== proto) return false
-      if (q && !s.host.toLowerCase().includes(q)) return false
+      if (q) {
+        const hostMatch = s.host.toLowerCase().includes(q)
+        const pathMatch = s.paths.some((p) => p.toLowerCase().includes(q))
+        if (!hostMatch && !pathMatch) return false
+      }
       return true
     })
-  }, [sessions, hostFilter, errorsOnly, proto])
+  }, [sessions, queryFilter, errorsOnly, proto])
 
   return (
     <div className="sessions-table">
       <div className="toolbar">
         <input
           type="search"
-          placeholder="Filter host…"
-          value={hostFilter}
-          onChange={(e) => setHostFilter(e.target.value)}
+          placeholder="Filter host or path…"
+          value={queryFilter}
+          onChange={(e) => setQueryFilter(e.target.value)}
         />
         <label className="check">
           <input

@@ -7,6 +7,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+### Added
+
+- **Sessions** list filter: search by **host or request path** (case-insensitive). Session summaries include a `paths` array derived from stream `:path` values at analysis time.
+
 ### Planned / not yet implemented
 
 - Flow-control window sparkline on the event timeline

@@ -74,11 +74,15 @@ Short index: [deploy/README.md](deploy/README.md).
 |------|------|--------|
 | [Import](docs/import.md) | Drop / choose netlog JSON; progress & privacy notes | First screen before analysis |
 | [Overview](docs/overview.md) | Counts and top findings | After a successful parse |
-| [Sessions](docs/sessions.md) | Session list + detail (streams, transport model, timeline, inspector) | Main investigation UI |
+| [Sessions](docs/sessions.md) | Session list + detail (host/path filter, streams, transport model, timeline, inspector) | Main investigation UI |
 | [Findings](docs/findings.md) | Full finding list with jump-to-evidence | Also exportable from the top bar |
 | [Guide](docs/guide.md) | How netlogs, session IDs, and stream IDs work | Available before or after import |
 
 Workspace chrome (after load): **Export MD** / **Export JSON**, **New file**, and tab navigation.
+
+### Sessions list filter
+
+On the **Sessions** tab, the top-left search box matches **host or request path** (case-insensitive substring). For example, `/api/` finds every session that carried a stream with that path, even when hosts differ. Paths come from parsed `:path` / request headers on each stream at analysis time.
 
 ## Diagnosis (high level)
 

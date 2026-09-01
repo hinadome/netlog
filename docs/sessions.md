@@ -22,10 +22,20 @@ Selecting a row loads that session on the right. Selecting a finding (from Findi
 
 | Control | Effect |
 |---------|--------|
-| **Filter host…** | Case-insensitive substring on host |
+| **Filter host or path…** | Case-insensitive substring on host **or** any request path on a stream in that session |
 | **Errors only** | Keep sessions with `hasError` |
 | **All / HTTP/2 / HTTP/3** | Protocol filter |
 | Count | Number of sessions matching filters |
+
+**Examples**
+
+| Query | Matches |
+|-------|---------|
+| `example.com` | Sessions whose host contains `example.com` |
+| `/login` | Sessions with any stream whose path contains `/login` |
+| `api` | Host or path containing `api` (e.g. `api.example.com` or `/v1/api/foo`) |
+
+Paths are collected from request headers on streams (`:path`) when the netlog is analyzed. They are not shown as a table column — only used for filtering. After deploying a new build, reload your netlog JSON in the browser so analysis includes `paths` for filtering.
 
 ### Columns
 

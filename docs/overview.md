@@ -29,5 +29,5 @@ Note: rows on Overview are display-only; use **Findings** or **Sessions** to jum
 
 ## Related
 
-- [Sessions](sessions.md) — drill into a connection
+- [Sessions](sessions.md) — drill into a connection; filter by host or path
 - [Findings](findings.md) — full list + evidence navigation
