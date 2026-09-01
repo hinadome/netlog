@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { TransferAnalysis } from '../diagnosis/runDiagnosis'
 import type { ParseProgress } from '../parser/readNetlog'
+import { validateNetlogFileSize } from '../security/netlogLimits'
 import type { WorkerRequest, WorkerResponse } from '../worker/parseNetlog.worker'
 
 export type AnalysisState =
@@ -21,6 +22,13 @@ export function useNetlogAnalysis() {
   const [state, setState] = useState<AnalysisState>({ status: 'idle' })
   const [compareState, setCompareState] = useState<CompareLoadState>({ status: 'idle' })
 
+  const terminateWorker = useCallback(() => {
+    if (workerRef.current) {
+      workerRef.current.terminate()
+      workerRef.current = null
+    }
+  }, [])
+
   const ensureWorker = useCallback(() => {
     if (workerRef.current) return workerRef.current
     const worker = new Worker(new URL('../worker/parseNetlog.worker.ts', import.meta.url), {
@@ -32,6 +40,14 @@ export function useNetlogAnalysis() {
 
   const analyzeFile = useCallback(
     async (file: File) => {
+      const sizeError = validateNetlogFileSize(file.size)
+      if (sizeError) {
+        setState({ status: 'error', message: sizeError, fileName: file.name })
+        return
+      }
+
+      terminateWorker()
+      setCompareState({ status: 'idle' })
       const id = ++reqIdRef.current
       setState({
         status: 'loading',
@@ -65,16 +81,23 @@ export function useNetlogAnalysis() {
         /* state already set */
       })
     },
-    [ensureWorker],
+    [ensureWorker, terminateWorker],
   )
 
   const reset = useCallback(() => {
+    terminateWorker()
     setState({ status: 'idle' })
     setCompareState({ status: 'idle' })
-  }, [])
+  }, [terminateWorker])
 
   const analyzeCompareFile = useCallback(
     async (file: File) => {
+      const sizeError = validateNetlogFileSize(file.size)
+      if (sizeError) {
+        setCompareState({ status: 'error', message: sizeError })
+        return
+      }
+
       const id = ++reqIdRef.current
       setCompareState({ status: 'loading', fileName: file.name })
 

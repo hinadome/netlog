@@ -8,6 +8,7 @@ import {
   parseAppUrlState,
   type AppTab,
 } from './model/appUrlState'
+import { sanitizeAppUrlState } from './security/sanitizeUrlState'
 import { exportFindingsJson, exportFindingsMarkdown } from './ui/exportFindings'
 import { CompareView } from './ui/CompareView'
 import { FindingsPanel } from './ui/FindingsPanel'
@@ -62,7 +63,7 @@ export default function App() {
 
   useEffect(() => {
     if (!analysis || urlHydratedRef.current) return
-    const parsed = parseAppUrlState(window.location.hash)
+    const parsed = sanitizeAppUrlState(parseAppUrlState(window.location.hash), analysis)
     if (parsed.tab) setTab(parsed.tab)
     if (parsed.sessionId !== undefined) setSelectedSessionId(parsed.sessionId)
     if (parsed.eventIndex !== undefined) setFocusEventIndex(parsed.eventIndex)

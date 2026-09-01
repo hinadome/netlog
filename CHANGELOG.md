@@ -9,6 +9,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Added
 
+- **Security hardening** — CSP and companion headers on Vercel, Netlify, and nginx deploys; 250 MiB netlog size cap; worker termination on new primary load; self-hosted IBM Plex fonts; URL hash state validated against loaded capture
 - **Search** tab — global search across findings, sessions, URL requests, and events (capped for large captures)
 - **Compare** tab — load a second netlog and diff findings counts, failed URLs, and hosts
 - **Overview — request waterfall** — phased timing bars for URL requests

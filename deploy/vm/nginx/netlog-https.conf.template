@@ -34,6 +34,12 @@ server {
 
     location / {
         try_files $uri $uri/ /index.html;
+        # See deploy/security-headers.snippet
+        add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; worker-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
     }
 
     access_log /var/log/nginx/__APP_NAME__.access.log;

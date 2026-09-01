@@ -13,6 +13,7 @@ function sourceDependencyId(params: Record<string, unknown>): number | undefined
   return undefined
 }
 
+import { assignSafeString } from '../security/safeRecord'
 import { splitHeaderLine } from './http2Session'
 
 function parseHeaders(params: Record<string, unknown>): Record<string, string> | undefined {
@@ -30,7 +31,7 @@ function parseHeaders(params: Record<string, unknown>): Record<string, string> |
   if (headers && typeof headers === 'object') {
     const out: Record<string, string> = {}
     for (const [k, v] of Object.entries(headers as Record<string, unknown>)) {
-      out[k.toLowerCase()] = String(v)
+      assignSafeString(out, k, String(v))
     }
     return out
   }

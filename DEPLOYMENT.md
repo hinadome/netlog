@@ -50,6 +50,18 @@ Detailed cloud static hosting (Vercel/Netlify) is documented in [README.md](READ
 
 Use `--no-tls` to confirm the app works **before** issuing certificates, then re-run with `--self-signed` or `--certbot`.
 
+### Security headers
+
+All production paths send a strict **Content-Security-Policy** (`default-src 'self'`, `frame-ancestors 'none'`, no external scripts/styles/fonts) plus `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+
+| Host | Config |
+|------|--------|
+| Vercel | [`vercel.json`](vercel.json) `headers` |
+| Netlify | [`netlify.toml`](netlify.toml) `[[headers]]` |
+| VM / container nginx | [`deploy/security-headers.snippet`](deploy/security-headers.snippet) (inlined in nginx templates) |
+
+Fonts are bundled via `@fontsource/*` — no Google Fonts CDN at runtime.
+
 ---
 
 ## VM deployment

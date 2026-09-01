@@ -1,5 +1,6 @@
 import type { NetlogEvent, ParsedNetlog, SourceEntry } from '../parser/types'
 import { sourcesOfType } from '../parser/indexSources'
+import { assignSafeScalar, assignSafeString, isSafeRecordKey } from '../security/safeRecord'
 import { isBenignResetOrCloseCode } from './sessionIssues'
 
 export type ProtocolKind = 'h2' | 'h3'
@@ -87,7 +88,7 @@ function parseHeaders(params: Record<string, unknown>): Record<string, string> |
       } else if (h && typeof h === 'object') {
         const rec = h as Record<string, unknown>
         for (const [k, v] of Object.entries(rec)) {
-          out[k.toLowerCase()] = String(v)
+          assignSafeString(out, k, String(v))
         }
       }
     }
@@ -96,7 +97,7 @@ function parseHeaders(params: Record<string, unknown>): Record<string, string> |
   if (headers && typeof headers === 'object') {
     const out: Record<string, string> = {}
     for (const [k, v] of Object.entries(headers as Record<string, unknown>)) {
-      out[k.toLowerCase()] = String(v)
+      assignSafeString(out, k, String(v))
     }
     return out
   }
@@ -173,17 +174,17 @@ function applyHttp2Event(session: ProtocolSession, ev: NetlogEvent): void {
     const settings = asRecord(p.settings ?? p)
     for (const [k, v] of Object.entries(settings)) {
       if (k === 'settings' || k === 'source_dependency') continue
-      if (typeof v === 'number' || typeof v === 'string') {
-        if (ev.type.includes('SEND')) session.settingsSent[k] = v
-        else session.settingsReceived[k] = v
-      }
+      if (ev.type.includes('SEND')) assignSafeScalar(session.settingsSent, k, v)
+      else assignSafeScalar(session.settingsReceived, k, v)
     }
     if (typeof p.id === 'string' || typeof p.id === 'number') {
       const key = String(p.id)
       const val = p.value
-      if (typeof val === 'number' || typeof val === 'string') {
-        if (ev.type.includes('SEND')) session.settingsSent[key] = val
-        else session.settingsReceived[key] = val
+      if (isSafeRecordKey(key)) {
+        if (typeof val === 'number' || typeof val === 'string') {
+          if (ev.type.includes('SEND')) session.settingsSent[key] = val
+          else session.settingsReceived[key] = val
+        }
       }
     }
   }
