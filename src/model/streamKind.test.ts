@@ -4,6 +4,7 @@ import {
   classifyQuicStreamId,
   countStreamKinds,
   formatStreamField,
+  matchesH3KindFilter,
 } from './streamKind'
 
 describe('streamKind', () => {
@@ -59,5 +60,12 @@ describe('streamKind', () => {
     expect(h2.peer).toBe(1)
     expect(formatStreamField(9, 'h2')).toContain('local request')
     expect(formatStreamField(4, 'h3')).toContain('local bidi')
+  })
+
+  it('filters H3 stream kinds for timeline', () => {
+    expect(matchesH3KindFilter(0, 'requests')).toBe(true)
+    expect(matchesH3KindFilter(2, 'control')).toBe(true)
+    expect(matchesH3KindFilter(0, 'control')).toBe(false)
+    expect(matchesH3KindFilter(undefined, 'requests')).toBe(true)
   })
 })

@@ -17,4 +17,4 @@ sudo ./deploy/vm/deploy.sh --domain netlog.example.com --no-tls
 ./deploy/container/deploy.sh --domain netlog.example.com --no-tls
 ```
 
-**Upgrade after app changes:** re-run the deploy script (omit `--no-build` on container) so `npm run build` ships the latest UI — swimlanes, URL requests, Sessions filters, actionable **Errors only**. TLS certs and `.env.production` are preserved on re-run.
+**Upgrade after app changes:** re-run the deploy script (omit `--no-build` on container) so `npm run build` ships the latest UI — Overview findings-first layout, Search/Compare, URL waterfall & retry chains (brush-aware), session detail tools, Findings filters, actionable **Errors only**. TLS certs and `.env.production` are preserved on re-run.

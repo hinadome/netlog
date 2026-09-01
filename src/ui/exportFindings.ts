@@ -1,3 +1,7 @@
+import type { TransferSession } from '../diagnosis/runDiagnosis'
+import type { Finding } from '../diagnosis/types'
+import { buildSessionNarrativeMarkdown } from '../model/sessionNarrative'
+
 export function exportFindingsJson(findings: unknown[], fileName: string): void {
   const blob = new Blob([JSON.stringify(findings, null, 2)], { type: 'application/json' })
   downloadBlob(blob, `${baseName(fileName)}-findings.json`)
@@ -61,4 +65,14 @@ function downloadBlob(blob: Blob, filename: string): void {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export function exportSessionNarrative(
+  session: TransferSession,
+  findings: Finding[],
+  fileName: string,
+): void {
+  const md = buildSessionNarrativeMarkdown(session, findings)
+  const blob = new Blob([md], { type: 'text/markdown' })
+  downloadBlob(blob, `${baseName(fileName)}-session-${session.id}.md`)
 }

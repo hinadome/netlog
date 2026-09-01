@@ -3,9 +3,10 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import {
   describeEvent,
   eventStreamId,
-  isErrorLikeEvent,
   isNoiseEvent,
 } from '../model/eventCatalog'
+import { isActionableErrorEvent } from '../model/sessionIssues'
+import { matchesH3KindFilter, type H3StreamKindFilter } from '../model/streamKind'
 import {
   buildEventStory,
   buildTimelineRows,
@@ -30,6 +31,8 @@ interface Props {
   onStreamFilterChange?: (v: number | 'all') => void
   availableStreams?: number[]
   gapMs?: number
+  firstErrorIndex?: number
+  onJumpToIndex?: (eventIndex: number) => void
 }
 
 export function Timeline({
@@ -44,10 +47,13 @@ export function Timeline({
   onStreamFilterChange,
   availableStreams,
   gapMs = 1000,
+  firstErrorIndex,
+  onJumpToIndex,
 }: Props) {
   const parentRef = useRef<HTMLDivElement>(null)
   const [density, setDensity] = useState<TimelineDensity>('signal')
   const [localStream, setLocalStream] = useState<number | 'all'>('all')
+  const [h3KindFilter, setH3KindFilter] = useState<H3StreamKindFilter>('all')
   const [showGaps, setShowGaps] = useState(true)
   const [query, setQuery] = useState('')
   const [searchAllEvents, setSearchAllEvents] = useState(false)
@@ -81,8 +87,13 @@ export function Timeline({
       if (!scopeEntireSession) {
         if (streamFilter !== 'all' && eventStreamId(ev) !== streamFilter) return false
 
+        if (protocol === 'h3' && h3KindFilter !== 'all') {
+          if (!matchesH3KindFilter(eventStreamId(ev), h3KindFilter)) return false
+        }
+
         if (density === 'errors') {
-          if (!(isErrorLikeEvent(ev) || highlightIndexes.has(ev.index))) return false
+          const actionable = isActionableErrorEvent(ev)
+          if (!(actionable || highlightIndexes.has(ev.index))) return false
         } else if (density === 'signal') {
           if (!( !isNoiseEvent(ev) || highlightIndexes.has(ev.index))) return false
         }
@@ -91,13 +102,47 @@ export function Timeline({
       if (needle && !eventMatchesQuery(ev, needle, protocol)) return false
       return true
     })
-  }, [events, streamFilter, density, highlightIndexes, needle, searchAllEvents, protocol])
+  }, [events, streamFilter, density, highlightIndexes, needle, searchAllEvents, protocol, h3KindFilter])
 
   const rows: TimelineRow[] = useMemo(() => {
     const built = buildTimelineRows(filteredEvents, story, gapMs)
     if (showGaps) return built
     return built.filter((r) => r.kind === 'event')
   }, [filteredEvents, story, gapMs, showGaps])
+
+  const eventRowIndexes = useMemo(
+    () =>
+      rows
+        .filter((r): r is Extract<TimelineRow, { kind: 'event' }> => r.kind === 'event')
+        .map((r) => r.event.index),
+    [rows],
+  )
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+      ) {
+        return
+      }
+      if (selectedIndex === undefined || !onJumpToIndex) return
+      const pos = eventRowIndexes.indexOf(selectedIndex)
+      if (pos < 0) return
+      if (e.key === 'j') {
+        e.preventDefault()
+        const next = eventRowIndexes[pos + 1]
+        if (next !== undefined) onJumpToIndex(next)
+      } else if (e.key === 'k') {
+        e.preventDefault()
+        const prev = eventRowIndexes[pos - 1]
+        if (prev !== undefined) onJumpToIndex(prev)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedIndex, eventRowIndexes, onJumpToIndex])
 
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -160,6 +205,35 @@ export function Timeline({
             All
           </DensityBtn>
         </div>
+        {firstErrorIndex !== undefined && onJumpToIndex && (
+          <button
+            type="button"
+            className="linkish timeline-first-err"
+            onClick={() => onJumpToIndex(firstErrorIndex)}
+          >
+            First error (#{firstErrorIndex})
+          </button>
+        )}
+        {protocol === 'h3' && (
+          <div className="timeline-h3-filter" role="group" aria-label="HTTP/3 stream kind">
+            <span className="muted small">H3</span>
+            <DensityBtn active={h3KindFilter === 'all'} onClick={() => setH3KindFilter('all')}>
+              All
+            </DensityBtn>
+            <DensityBtn
+              active={h3KindFilter === 'requests'}
+              onClick={() => setH3KindFilter('requests')}
+            >
+              Requests
+            </DensityBtn>
+            <DensityBtn
+              active={h3KindFilter === 'control'}
+              onClick={() => setH3KindFilter('control')}
+            >
+              Control
+            </DensityBtn>
+          </div>
+        )}
         <label className="check gap-toggle">
           <input
             type="checkbox"

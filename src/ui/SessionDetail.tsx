@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { TransferSession } from '../diagnosis/runDiagnosis'
 import type { Finding } from '../diagnosis/types'
+import { findFirstActionableErrorIndex } from '../model/sessionIssues'
 import { classifyStreamId, countStreamKinds } from '../model/streamKind'
 import type { NetlogEvent } from '../parser/types'
 import { EventInspector } from './EventInspector'
+import { exportSessionNarrative } from './exportFindings'
 import { FindingsPanel } from './FindingsPanel'
+import { FlowControlSparkline } from './FlowControlSparkline'
+import { ProtocolDiffPanel } from './ProtocolDiffPanel'
 import { Timeline } from './Timeline'
 import { StreamLifecycleBars } from './StreamLifecycleBars'
 import { TransportModel } from './TransportModel'
@@ -12,6 +16,7 @@ import { TransportModel } from './TransportModel'
 interface Props {
   session: TransferSession
   findings: Finding[]
+  fileName: string
   focusEventIndex?: number
   onFocusFinding: (f: Finding) => void
   onOpenStreamGuide?: (
@@ -22,6 +27,7 @@ interface Props {
 export function SessionDetail({
   session,
   findings,
+  fileName,
   focusEventIndex,
   onFocusFinding,
   onOpenStreamGuide,
@@ -50,6 +56,16 @@ export function SessionDetail({
   const activeIndex = selected?.index ?? focusEventIndex
   const isH3 = session.protocol === 'h3'
   const guideAnchor = isH3 ? 'guide-http3-streams' : 'guide-http2-streams'
+
+  const firstErrorIndex = useMemo(
+    () => findFirstActionableErrorIndex(session, findings),
+    [session, findings],
+  )
+
+  const jumpToIndex = (eventIndex: number) => {
+    const ev = session.events.find((e) => e.index === eventIndex)
+    if (ev) setSelected(ev)
+  }
 
   useEffect(() => {
     setStreamFilter('all')
@@ -135,7 +151,25 @@ export function SessionDetail({
             ) : null}
           </div>
         </div>
+        <button
+          type="button"
+          className="ghost session-export-narrative"
+          onClick={() => exportSessionNarrative(session, findings, fileName)}
+        >
+          Export session MD
+        </button>
       </header>
+
+      <ProtocolDiffPanel session={session} onJumpToEvent={jumpToIndex} />
+
+      <FlowControlSparkline
+        session={session}
+        baseTimeMs={session.startTimeMs}
+        onSelectTime={(timeMs) => {
+          const ev = session.events.find((e) => e.timeMs >= timeMs)
+          if (ev) setSelected(ev)
+        }}
+      />
 
       <TransportModel
         session={session}
@@ -262,6 +296,8 @@ export function SessionDetail({
             streamFilter={streamFilter}
             onStreamFilterChange={setStreamFilter}
             availableStreams={availableStreams}
+            firstErrorIndex={firstErrorIndex}
+            onJumpToIndex={jumpToIndex}
           />
           <EventInspector
             event={selected}
@@ -269,10 +305,8 @@ export function SessionDetail({
             protocol={session.protocol}
             baseTimeMs={session.startTimeMs}
             findings={findings}
-            onJumpToEvent={(eventIndex) => {
-              const ev = session.events.find((e) => e.index === eventIndex)
-              if (ev) setSelected(ev)
-            }}
+            sessionId={session.id}
+            onJumpToEvent={jumpToIndex}
             onOpenStreamGuide={
               onOpenStreamGuide ? () => onOpenStreamGuide(guideAnchor) : undefined
             }

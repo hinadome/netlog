@@ -9,32 +9,48 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Added
 
-- **Overview — session timeline (swimlanes)** — per-session bars with finding markers; **Errors only** filter; drag **brush** to narrow by time (shared with Sessions tab and URL requests table)
-- **Overview — URL requests table** — correlated `URL_REQUEST` rows with failed-only default, search, and brush filter; click opens the linked H2/H3 session
-- **Sessions** list filter: search by **host or request path** (case-insensitive). Session summaries include a `paths` array derived from stream `:path` values at analysis time
-- **Session detail — stream lifecycle bars** — compact per-stream phase visualization (open → data → close / RST)
-
-### Fixed
-
-- **Errors only** (Overview swimlanes + Sessions list) and **Sessions w/ errors** stat now use **actionable** error logic aligned with timeline **Errors** density — critical/error findings or non-benign protocol events; excludes normal `QUIC_SESSION_CLOSED`, `NO_ERROR`, and `CANCEL` (code 8) resets
-- `summary.hasError` no longer drives Errors-only filtering (it was inflated by benign closes and CANCEL resets)
-- **Search all** on the session timeline searches the whole session when checked (ignores density and stream chip)
+- **Search** tab — global search across findings, sessions, URL requests, and events (capped for large captures)
+- **Compare** tab — load a second netlog and diff findings counts, failed URLs, and hosts
+- **Overview — request waterfall** — phased timing bars for URL requests
+- **Overview — retry chains** — multiple attempts for the same origin + path
+- **Overview — session timeline (swimlanes)** — per-session bars with finding markers; **Errors only** filter; drag **brush** to narrow by time
+- **Overview — URL requests table** — correlated `URL_REQUEST` rows with failed-only default, search, and brush filter
+- **Sessions** list filter: search by **host or request path** (case-insensitive)
+- **Session detail — stream lifecycle bars** — compact per-stream phase visualization
+- **Session detail — SETTINGS & GOAWAY** panel with mismatch highlighting
+- **Session detail — flow-control sparkline** from WINDOW_UPDATE events
+- **Session detail — Export session MD** narrative report
+- **Timeline — HTTP/3 filters** — Requests vs Control stream kinds
+- **Timeline — First error** jump button; **j/k** keyboard navigation; Errors density uses actionable events
+- **Event inspector — jq helpers** — copy commands for event and session window
+- **Findings filters** — severity, rule id, host/URL
+- **Shareable URL state** — tab, session, event, finding, brush, and search query in `#?…` hash
+- **Keyboard shortcuts** — `1`–`5` tabs, `g` guide, `/` search
+- **Large capture banner** when event count ≥ 100k
+- New diagnosis rules: `h2-header-duplicate`, `h2-header-case`, `h2-header-authority`, `tls-handshake-fail`, `tls-alpn-unexpected`, `tls-negotiated`
 
 ### Changed
 
+- **Overview layout** (findings-first): Top findings → URL requests → Session timeline → Request waterfall → Retry chains (stats row unchanged at top)
 - Sessions **Status** column: `error` (actionable), `warning` (benign `hasError` or warning findings), or `ok`
 - Session model: benign RST/CANCEL and normal QUIC close no longer set `hasError` on streams/sessions
 
+### Fixed
+
+- **Errors only** (Overview swimlanes + Sessions list) and **Sessions w/ errors** stat use **actionable** error logic aligned with timeline **Errors** density
+- `summary.hasError` no longer drives Errors-only filtering alone
+- **Search all** on the session timeline searches the whole session when checked
+- **Retry chains** — no longer groups all URL-less requests under `(unknown)`; layout and brush filtering fixed
+
 ### Documentation
 
-- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts/README — upgrade notes and actionable-error semantics
-- [docs/overview.md](docs/overview.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — swimlanes, URL requests, brush, Errors only vs timeline
-- In-app **Guide** — new “Errors & filters” section
+- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts — investigation features and Overview workflow
+- [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md)
+- In-app **Guide** — “Errors & filters” section
 
 ### Planned / not yet implemented
 
-- Flow-control window sparkline on the event timeline
-- Explicit HTTP/3 timeline filters (Requests only / Control only)
+- (none tracked)
 
 ---
 

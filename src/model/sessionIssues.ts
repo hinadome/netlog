@@ -115,3 +115,23 @@ export function sessionIssueKind(
   }
   return 'ok'
 }
+
+/** First event index that qualifies as actionable error or critical/error finding evidence. */
+export function findFirstActionableErrorIndex(
+  session: TransferSession,
+  findings: Finding[],
+): number | undefined {
+  const evidence = new Set<number>()
+  for (const f of findings) {
+    if (f.severity === 'critical' || f.severity === 'error') {
+      for (const i of f.evidenceEventIndexes) evidence.add(i)
+    }
+  }
+
+  let first: number | undefined
+  for (const ev of session.events) {
+    if (!(evidence.has(ev.index) || isActionableErrorEvent(ev))) continue
+    if (first === undefined || ev.index < first) first = ev.index
+  }
+  return first
+}

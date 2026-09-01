@@ -81,7 +81,14 @@ Uses **certbot webroot** (`/var/www/certbot`), never `certbot --nginx` (avoids r
 
 ### Repeatable upgrade
 
-Re-run the **same** TLS mode command after pulling new code. The script runs `npm ci` and `npm run build` by default, publishing fresh static assets to `/opt/netlog/www` (includes UI such as Overview swimlanes, URL requests table, Sessions host/path filter, and actionable **Errors only**). Certificates are reused unless you pass `--force-self-signed` or `--force-certbot`. Use `--skip-build` only when you intentionally want to keep the existing `www` tree.
+Re-run the **same** TLS mode command after pulling new code. The script runs `npm ci` and `npm run build` by default, publishing fresh static assets to `/opt/netlog/www`. Recent UI includes:
+
+- Overview: findings-first layout (top findings → URL requests → session timeline → waterfall → retry chains)
+- **Search** and **Compare** tabs, shareable `#?tab=…` URL state, keyboard shortcuts
+- Session detail: SETTINGS/GOAWAY, flow-control sparkline, H3 timeline filters, jq helpers, session MD export
+- Findings filters; actionable **Errors only**; Sessions host/path filter
+
+Certificates are reused unless you pass `--force-self-signed` or `--force-certbot`. Use `--skip-build` only when you intentionally want to keep the existing `www` tree.
 
 ```bash
 # Pull latest, rebuild app assets, keep TLS mode
@@ -152,7 +159,7 @@ Certbot runs in a one-shot container sharing the ACME webroot volume with `gatew
 
 ### Repeatable upgrade
 
-Re-run the deploy script after `git pull` to rebuild the Docker image and refresh static assets (Overview swimlanes, URL requests, Sessions filters, actionable **Errors only**). Omit `--no-build` unless you only changed nginx/TLS config.
+Re-run the deploy script after `git pull` to rebuild the Docker image and refresh static assets (Overview findings-first layout, Search/Compare, waterfall, retry chains with brush, session detail tools). Omit `--no-build` unless you only changed nginx/TLS config.
 
 ```bash
 ./deploy/container/deploy.sh --domain netlog.example.com --self-signed

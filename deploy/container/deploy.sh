@@ -2,8 +2,8 @@
 # Netlog Lens — Container deploy (Compose app + nginx gateway)
 # Does NOT edit host /etc/nginx — only Docker networks/ports.
 #
-# Re-run after git pull to rebuild the app image (swimlanes, URL requests, Errors only; certs/env preserved).
-# Use --no-build to refresh gateway config without rebuilding the SPA image.
+# Re-run after git pull to rebuild the app image (Overview layout, Search/Compare, waterfall,
+# retry chains, session tools; certs/env preserved). Use --no-build for gateway-only refresh.
 set -euo pipefail
 
 APP_NAME="netlog"

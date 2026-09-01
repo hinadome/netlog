@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { jqForEventIndex, jqForSessionEvents } from '../model/jqHelpers'
 import type { Finding } from '../diagnosis/types'
 import { describeEvent, eventStreamId, type DescribedEvent } from '../model/eventCatalog'
 import {
@@ -16,6 +17,7 @@ interface Props {
   protocol?: ProtocolKind
   baseTimeMs: number
   findings: Finding[]
+  sessionId?: number
   onJumpToEvent: (eventIndex: number) => void
   onOpenStreamGuide?: () => void
 }
@@ -26,6 +28,7 @@ export function EventInspector({
   protocol,
   baseTimeMs,
   findings,
+  sessionId,
   onJumpToEvent,
   onOpenStreamGuide,
 }: Props) {
@@ -80,6 +83,25 @@ export function EventInspector({
         +{Math.round(event.timeMs - baseTimeMs)} ms · phase {event.phase} · event #{event.index}
         {described.streamId !== undefined ? ` · stream ${described.streamId}` : ''}
       </p>
+
+      <section className="inspector-block inspector-jq">
+        <h5>jq helpers</h5>
+        <div className="inspector-jq-row">
+          <code className="inspector-jq-code">{jqForEventIndex(event.index)}</code>
+          <CopyButton text={jqForEventIndex(event.index)} label="Copy event jq" />
+        </div>
+        {sessionId !== undefined && (
+          <div className="inspector-jq-row">
+            <code className="inspector-jq-code">
+              {jqForSessionEvents(sessionId, event.index).split('\n')[0]}…
+            </code>
+            <CopyButton
+              text={jqForSessionEvents(sessionId, event.index)}
+              label="Copy session window jq"
+            />
+          </div>
+        )}
+      </section>
 
       {streamType && (
         <section className="inspector-block">
@@ -187,6 +209,24 @@ function roleClass(role: string): string {
   if (role === 'cause') return 't-badge--cause'
   if (role === 'follow-up') return 't-badge--follow'
   return ''
+}
+
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      className="linkish small"
+      onClick={() => {
+        void navigator.clipboard.writeText(text).then(() => {
+          setCopied(true)
+          window.setTimeout(() => setCopied(false), 1500)
+        })
+      }}
+    >
+      {copied ? 'Copied' : label}
+    </button>
+  )
 }
 
 function RelatedRow({

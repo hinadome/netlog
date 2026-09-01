@@ -2,8 +2,9 @@
 # Netlog Lens — VM deploy (host nginx FrontendGateway + static site)
 # Owns only: /opt/netlog, sites-available/netlog.conf, /etc/nginx/ssl/netlog/
 #
-# Re-run after git pull to rebuild /opt/netlog/www (ships latest UI: swimlanes, URL requests,
-# Sessions host/path + Errors only; certs reused). Use --skip-build to refresh nginx/TLS only.
+# Re-run after git pull to rebuild /opt/netlog/www. Ships: Overview (findings→URLs→timeline→
+# waterfall→retry chains), Search/Compare, session detail tools, Errors only, Sessions filters.
+# Certs reused. Use --skip-build for nginx/TLS-only refresh.
 set -euo pipefail
 
 APP_NAME="netlog"

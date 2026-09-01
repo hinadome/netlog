@@ -73,23 +73,38 @@ Short index: [deploy/README.md](deploy/README.md).
 | Page | Role | Detail |
 |------|------|--------|
 | [Import](docs/import.md) | Drop / choose netlog JSON; progress & privacy notes | First screen before analysis |
-| [Overview](docs/overview.md) | Stats, session swimlanes, URL requests, top findings | After a successful parse |
-| [Sessions](docs/sessions.md) | Session list + detail (host/path filter, streams, transport model, timeline, inspector) | Main investigation UI |
-| [Findings](docs/findings.md) | Full finding list with jump-to-evidence | Also exportable from the top bar |
-| [Guide](docs/guide.md) | How netlogs, session IDs, and stream IDs work | Available before or after import |
+| [Overview](docs/overview.md) | Findings-first dashboard: top findings → URL requests → timeline → waterfall → retry chains | Default after parse |
+| [Sessions](docs/sessions.md) | Session list + detail (host/path filter, lifecycle, SETTINGS/GOAWAY, timeline, inspector) | Main drill-down UI |
+| [Findings](docs/findings.md) | Full finding list with filters and jump-to-evidence | Exportable from top bar |
+| [Search](docs/search.md) | Whole-capture search (`/` shortcut) | Findings, sessions, URLs, events |
+| [Compare](docs/compare.md) | Diff two netlog files | Findings, failed URLs, hosts |
+| [Guide](docs/guide.md) | Netlog structure, errors vs warnings, stream IDs | Before or after import |
 
-Workspace chrome (after load): **Export MD** / **Export JSON**, **New file**, and tab navigation.
+Workspace chrome: **Export MD** / **Export JSON**, **New file**, tab navigation (`1`–`5`, `g` guide).
 
-### Sessions list filter
+### Overview workflow (findings → failed URL → drill in)
+
+After the stats row:
+
+1. **Top findings** — click to jump to evidence  
+2. **URL requests** — failed-only default; respects time brush  
+3. **Session timeline** — swimlanes; **brush** sets time filter for URL sections + Sessions tab  
+4. **Request waterfall** — DNS/connect/TLS/request phases per URL  
+5. **Retry chains** — multiple attempts for same origin + path (brush-aware)
+
+Shareable links: `#?tab=sessions&session=42&event=1234` (tab, session, event, finding, brush, search query).
+
+### Sessions & errors
 
 On the **Sessions** tab, the top-left search box matches **host or request path** (case-insensitive substring). For example, `/api/` finds every session that carried a stream with that path, even when hosts differ. Paths come from parsed `:path` / request headers on each stream at analysis time.
 
-**Errors only** shows sessions with **actionable** issues — the same rule as Overview swimlanes and the timeline **Errors** density: critical/error findings, or protocol events that are not benign closes/resets (normal `QUIC_SESSION_CLOSED`, `NO_ERROR`, and `CANCEL` are excluded). See [docs/sessions.md](docs/sessions.md#errors-only-vs-timeline).
+**Errors only** on Sessions and Overview swimlanes uses **actionable** error logic (aligned with timeline **Errors** density). See [docs/sessions.md](docs/sessions.md#errors-only-vs-timeline).
 
-### Overview extras
+### Session detail extras
 
-- **Session timeline** — swimlane per H2/H3 session; finding markers; time **brush** (also filters URL requests and Sessions list)
-- **URL requests** — failed requests by default; click to jump to the correlated session
+- Stream **lifecycle bars**, **SETTINGS & GOAWAY** panel, **flow-control sparkline**
+- Timeline: H3 **Requests / Control** filters, **First error** jump, `j`/`k` navigation
+- Event inspector: **jq** copy helpers · **Export session MD**
 
 ## What counts as an error?
 
@@ -112,6 +127,8 @@ If Errors only lists a session but the timeline looks empty, switch density to *
 | `h2-ping` | Unacked PINGs |
 | `url-net-error` | URL requests with `ERR_HTTP2_*` / `ERR_QUIC_*` (and related) |
 | `quic-close` / `quic-rst` / `quic-handshake` | QUIC connection close, stream RST, handshake failure |
+| `h2-header-duplicate` / `h2-header-case` / `h2-header-authority` | Malformed or duplicate HTTP/2 pseudo-headers |
+| `tls-handshake-fail` / `tls-alpn-unexpected` / `tls-negotiated` | TLS handshake errors and ALPN negotiation |
 
 Severities: `critical` · `error` · `warning` · `info`.
 
@@ -127,7 +144,7 @@ JSON file → Web Worker
   → index sources
   → HTTP/2 & QUIC session models + URL request correlation
   → diagnosis rules
-  → UI (Overview / Sessions / Findings / Guide)
+  → UI (Overview / Sessions / Findings / Search / Compare / Guide)
 ```
 
 Useful references: Chromium `net_log_event_type_list.h`, Catapult netlog-viewer, Cloudflare typed netlog event shapes.
@@ -158,6 +175,8 @@ jq '
 - [Overview](docs/overview.md)
 - [Sessions](docs/sessions.md)
 - [Findings](docs/findings.md)
+- [Search](docs/search.md)
+- [Compare](docs/compare.md)
 - [Guide](docs/guide.md)
 - [CHANGELOG](CHANGELOG.md) — full implementation history
 - [DEPLOYMENT](DEPLOYMENT.md) — VM / container nginx deploys

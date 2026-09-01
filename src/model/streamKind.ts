@@ -201,5 +201,21 @@ export function formatStreamField(streamId: number, protocol?: ProtocolKind | bo
   return `${streamId} · ${t.shortLabel}${roleSuffix}`
 }
 
+export type H3StreamKindFilter = 'all' | 'requests' | 'control'
+
+/** HTTP/3 timeline filter: requests (local/peer bidi) vs control (uni 2/3). */
+export function matchesH3KindFilter(
+  streamId: number | undefined,
+  filter: H3StreamKindFilter,
+): boolean {
+  if (filter === 'all') return true
+  if (streamId === undefined) return true
+  if (streamId < 0) return filter === 'control'
+  const bits = streamId % 4
+  if (filter === 'requests') return bits === 0 || bits === 1
+  if (filter === 'control') return bits === 2 || bits === 3
+  return true
+}
+
 /** @deprecated Use StreamKindInfo */
 export type QuicStreamType = StreamKindInfo

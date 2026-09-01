@@ -9,10 +9,17 @@ export type AnalysisState =
   | { status: 'ready'; analysis: TransferAnalysis }
   | { status: 'error'; message: string; fileName?: string }
 
+export type CompareLoadState =
+  | { status: 'idle' }
+  | { status: 'loading'; fileName: string }
+  | { status: 'ready'; analysis: TransferAnalysis }
+  | { status: 'error'; message: string }
+
 export function useNetlogAnalysis() {
   const workerRef = useRef<Worker | null>(null)
   const reqIdRef = useRef(0)
   const [state, setState] = useState<AnalysisState>({ status: 'idle' })
+  const [compareState, setCompareState] = useState<CompareLoadState>({ status: 'idle' })
 
   const ensureWorker = useCallback(() => {
     if (workerRef.current) return workerRef.current
@@ -63,7 +70,44 @@ export function useNetlogAnalysis() {
 
   const reset = useCallback(() => {
     setState({ status: 'idle' })
+    setCompareState({ status: 'idle' })
   }, [])
 
-  return { state, analyzeFile, reset }
+  const analyzeCompareFile = useCallback(
+    async (file: File) => {
+      const id = ++reqIdRef.current
+      setCompareState({ status: 'loading', fileName: file.name })
+
+      const text = await file.text()
+      const worker = ensureWorker()
+
+      await new Promise<void>((resolve, reject) => {
+        const onMessage = (ev: MessageEvent<WorkerResponse>) => {
+          const msg = ev.data
+          if (msg.id !== id) return
+          if (msg.type === 'result') {
+            worker.removeEventListener('message', onMessage)
+            setCompareState({ status: 'ready', analysis: msg.analysis })
+            resolve()
+          } else if (msg.type === 'error') {
+            worker.removeEventListener('message', onMessage)
+            setCompareState({ status: 'error', message: msg.message })
+            reject(new Error(msg.message))
+          }
+        }
+        worker.addEventListener('message', onMessage)
+        const req: WorkerRequest = { type: 'parse', id, text, fileName: file.name }
+        worker.postMessage(req)
+      }).catch(() => {
+        /* state set */
+      })
+    },
+    [ensureWorker],
+  )
+
+  const clearCompare = useCallback(() => {
+    setCompareState({ status: 'idle' })
+  }, [])
+
+  return { state, compareState, analyzeFile, analyzeCompareFile, clearCompare, reset }
 }

@@ -58,6 +58,8 @@ export interface UrlRequestSummary {
   relatedSessionIds: number[]
   /** Global event index for jump-to-evidence (usually URL_REQUEST END). */
   evidenceEventIndex?: number
+  /** Slim event list for waterfall visualization. */
+  timelineEvents?: Array<{ type: string; timeMs: number; phase: string }>
 }
 
 export interface TimeBrushRange {

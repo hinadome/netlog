@@ -11,7 +11,9 @@ import {
   ruleRstAndGoaway,
   ruleUrlRequestErrors,
 } from './rules/http2Rules'
+import { resetHeaderFindingIds, ruleHeaderAnomalies } from './rules/headerRules'
 import { resetQuicFindingIds, ruleQuicConnectionClose, ruleQuicHandshake } from './rules/quicRules'
+import { resetTlsFindingIds, ruleTlsAlpn } from './rules/tlsRules'
 import type { AnalysisResult, Finding, SessionSummary, UrlRequestSummary } from './types'
 
 const SEVERITY_ORDER: Record<Finding['severity'], number> = {
@@ -66,6 +68,11 @@ function toUrlRequestSummary(req: UrlRequestInfo): UrlRequestSummary {
     endTimeMs: req.endTimeMs,
     relatedSessionIds: [...req.relatedSessionIds],
     evidenceEventIndex: endEv?.index ?? lastEv?.index,
+    timelineEvents: req.events.map((e) => ({
+      type: e.type,
+      timeMs: e.timeMs,
+      phase: e.phase,
+    })),
   }
 }
 
@@ -125,6 +132,8 @@ export function runDiagnosis(
   onProgress?.({ stage: 'modeling', percent: 96, message: 'Building HTTP/2 sessions…' })
   resetFindingIds()
   resetQuicFindingIds()
+  resetHeaderFindingIds()
+  resetTlsFindingIds()
 
   const http2Sessions = buildHttp2Sessions(parsed)
   onProgress?.({ stage: 'modeling', percent: 97, message: 'Building QUIC sessions…' })
@@ -138,11 +147,13 @@ export function runDiagnosis(
 
   const findings: Finding[] = [
     ...ruleInvalidHeaders(http2Sessions),
+    ...ruleHeaderAnomalies(http2Sessions),
     ...ruleRstAndGoaway(http2Sessions),
     ...ruleFlowControl(http2Sessions),
     ...rulePingTimeout(http2Sessions),
     ...ruleQuicConnectionClose(quicSessions),
     ...ruleQuicHandshake(quicSessions),
+    ...ruleTlsAlpn(parsed, allSessions),
     ...ruleUrlRequestErrors(allSessions, urlRequests),
   ]
 
