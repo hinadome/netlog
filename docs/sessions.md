@@ -8,11 +8,13 @@ Main investigation workspace: session list + selected session detail.
 ┌─────────────────┬──────────────────────────────────────────┐
 │ Sessions table  │ Session detail                           │
 │ (filters)       │ header · transport · streams · findings  │
-│                 │ timeline + event inspector               │
+│                 │ lifecycle bars · timeline + inspector    │
 └─────────────────┴──────────────────────────────────────────┘
 ```
 
 Selecting a row loads that session on the right. Selecting a finding (from Findings or the session side panel) can open this tab, select the session, and focus the evidence event.
+
+When you set a time **brush** on Overview swimlanes, the Sessions list respects the same range until you clear it.
 
 ---
 
@@ -23,9 +25,10 @@ Selecting a row loads that session on the right. Selecting a finding (from Findi
 | Control | Effect |
 |---------|--------|
 | **Filter host or path…** | Case-insensitive substring on host **or** any request path on a stream in that session |
-| **Errors only** | Keep sessions with `hasError` |
+| **Errors only** | Sessions with **actionable** errors only (see [below](#errors-only-vs-timeline)) — same rule as Overview swimlanes |
 | **All / HTTP/2 / HTTP/3** | Protocol filter |
-| Count | Number of sessions matching filters |
+| Time brush | When set from Overview, only sessions overlapping the brushed range |
+| Count | `Showing X of Y` — with Errors only, `Y` is the actionable-error count |
 
 **Examples**
 
@@ -46,9 +49,38 @@ Paths are collected from request headers on streams (`:path`) when the netlog is
 | Host | Negotiated / inferred host |
 | Streams | Stream count from model |
 | Duration | `end − start` session times |
-| Status | `error` tag or `ok` |
+| Status | `error` · `warning` · `ok` (see below) |
+
+| Status | Meaning |
+|--------|---------|
+| **error** | Qualifies for **Errors only** — critical/error finding or actionable protocol event |
+| **warning** | Softer signal: internal `hasError` and/or warning findings (flow control, PING, etc.) — **not** included in Errors only |
+| **ok** | No actionable or warning-level issues |
 
 **Session ID ≠ stream ID.** Session ID is Chrome’s source object id; stream IDs live in `params.stream_id` inside that session. See [Guide](guide.md).
+
+---
+
+## Errors only vs timeline
+
+**Errors only** (here and on Overview swimlanes) uses one shared rule in `sessionIssues.ts`:
+
+1. **Critical or error findings** on the session, **or**
+2. At least one **actionable protocol event** — an error-like catalog event that is **not** benign control flow.
+
+**Excluded (benign):**
+
+| Event / code | Why excluded |
+|--------------|--------------|
+| `QUIC_SESSION_CLOSED` | Normal connection end |
+| RST / reset with `NO_ERROR`, `CANCEL`, code **0** or **8** | Normal close or navigation cancel |
+| Benign `GOAWAY` / `HTTP2_SESSION_CLOSE` | Ok net error / NO_ERROR |
+
+**Not used for Errors only:** `summary.hasError` alone (it used to include every QUIC close and every RST).
+
+**Timeline alignment:** Session detail → **Errors** density shows the same class of protocol events (plus finding evidence). Default **Hide noise** still hides routine WINDOW_UPDATE / ping chatter — so use **All** or **Search all** if you need to see everything.
+
+If a session appears under Errors only, you should see at least one critical/error finding marker or a red-styled event under timeline **Errors**. If not, file a bug with the session id.
 
 ---
 
@@ -87,6 +119,10 @@ May show a fate note (e.g. GOAWAY, connection close, many errored streams). **Wh
 
 **Click a row** to filter the timeline to that stream; click again (or **Clear stream N filter**) to show all streams.
 
+### Stream lifecycle bars
+
+Compact per-stream timeline: phases such as open, data, close, or RST. Errored streams are highlighted. Click a bar to filter the event timeline to that stream.
+
 ### Session findings
 
 Compact list of findings for this session only. Clicking a finding:
@@ -115,7 +151,7 @@ Without Search all, search only runs on events that already pass density + strea
 
 | Mode | Shows |
 |------|--------|
-| **Errors** | Error-like events and finding evidence |
+| **Errors** | Actionable error-like events and finding evidence (benign closes/CANCEL excluded) |
 | **Hide noise** (default) | Non-noise events + evidence (hides routine noise such as many WINDOW_UPDATE / ping chatter) |
 | **All** | Every event in scope |
 
@@ -155,5 +191,5 @@ Annotated view of the selected timeline event (not raw JSON by default).
 ## Related
 
 - [Findings](findings.md) — global list that jumps here
-- [Guide](guide.md) — IDs, H2 vs H3, transport
-- [Overview](overview.md) — high-level counts
+- [Guide](guide.md) — IDs, H2 vs H3, transport, error semantics
+- [Overview](overview.md) — swimlanes, URL requests, time brush

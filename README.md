@@ -73,7 +73,7 @@ Short index: [deploy/README.md](deploy/README.md).
 | Page | Role | Detail |
 |------|------|--------|
 | [Import](docs/import.md) | Drop / choose netlog JSON; progress & privacy notes | First screen before analysis |
-| [Overview](docs/overview.md) | Counts and top findings | After a successful parse |
+| [Overview](docs/overview.md) | Stats, session swimlanes, URL requests, top findings | After a successful parse |
 | [Sessions](docs/sessions.md) | Session list + detail (host/path filter, streams, transport model, timeline, inspector) | Main investigation UI |
 | [Findings](docs/findings.md) | Full finding list with jump-to-evidence | Also exportable from the top bar |
 | [Guide](docs/guide.md) | How netlogs, session IDs, and stream IDs work | Available before or after import |
@@ -83,6 +83,24 @@ Workspace chrome (after load): **Export MD** / **Export JSON**, **New file**, an
 ### Sessions list filter
 
 On the **Sessions** tab, the top-left search box matches **host or request path** (case-insensitive substring). For example, `/api/` finds every session that carried a stream with that path, even when hosts differ. Paths come from parsed `:path` / request headers on each stream at analysis time.
+
+**Errors only** shows sessions with **actionable** issues — the same rule as Overview swimlanes and the timeline **Errors** density: critical/error findings, or protocol events that are not benign closes/resets (normal `QUIC_SESSION_CLOSED`, `NO_ERROR`, and `CANCEL` are excluded). See [docs/sessions.md](docs/sessions.md#errors-only-vs-timeline).
+
+### Overview extras
+
+- **Session timeline** — swimlane per H2/H3 session; finding markers; time **brush** (also filters URL requests and Sessions list)
+- **URL requests** — failed requests by default; click to jump to the correlated session
+
+## What counts as an error?
+
+| Layer | Rule |
+|-------|------|
+| **Errors only** filter / **Sessions w/ errors** stat | Critical or error **findings**, or **actionable** protocol events on the session (matches timeline **Errors** density) |
+| **Excluded as benign** | `QUIC_SESSION_CLOSED`, RST with `NO_ERROR` / `CANCEL` (code 0 or 8), ok `HTTP2_SESSION_CLOSE` |
+| **Status: warning** | Session still has `hasError` from softer signals or **warning** findings (e.g. flow control, PING) — visible in the list but not in Errors only |
+| **Timeline Errors** | Catalog `critical` / `error` severity or `category === error`, minus benign closes/resets; **Hide noise** (default) hides routine chatter |
+
+If Errors only lists a session but the timeline looks empty, switch density to **All** or use **Search all** — you may have a warning-level finding or a hidden noise event. After the actionable-error fix, that mismatch should be rare.
 
 ## Diagnosis (high level)
 

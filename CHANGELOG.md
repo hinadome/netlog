@@ -9,12 +9,31 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Added
 
-- **Sessions** list filter: search by **host or request path** (case-insensitive). Session summaries include a `paths` array derived from stream `:path` values at analysis time.
+- **Overview — session timeline (swimlanes)** — per-session bars with finding markers; **Errors only** filter; drag **brush** to narrow by time (shared with Sessions tab and URL requests table)
+- **Overview — URL requests table** — correlated `URL_REQUEST` rows with failed-only default, search, and brush filter; click opens the linked H2/H3 session
+- **Sessions** list filter: search by **host or request path** (case-insensitive). Session summaries include a `paths` array derived from stream `:path` values at analysis time
+- **Session detail — stream lifecycle bars** — compact per-stream phase visualization (open → data → close / RST)
+
+### Fixed
+
+- **Errors only** (Overview swimlanes + Sessions list) and **Sessions w/ errors** stat now use **actionable** error logic aligned with timeline **Errors** density — critical/error findings or non-benign protocol events; excludes normal `QUIC_SESSION_CLOSED`, `NO_ERROR`, and `CANCEL` (code 8) resets
+- `summary.hasError` no longer drives Errors-only filtering (it was inflated by benign closes and CANCEL resets)
+- **Search all** on the session timeline searches the whole session when checked (ignores density and stream chip)
+
+### Changed
+
+- Sessions **Status** column: `error` (actionable), `warning` (benign `hasError` or warning findings), or `ok`
+- Session model: benign RST/CANCEL and normal QUIC close no longer set `hasError` on streams/sessions
+
+### Documentation
+
+- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts/README — upgrade notes and actionable-error semantics
+- [docs/overview.md](docs/overview.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — swimlanes, URL requests, brush, Errors only vs timeline
+- In-app **Guide** — new “Errors & filters” section
 
 ### Planned / not yet implemented
 
 - Flow-control window sparkline on the event timeline
-- Phase D swimlane overview of sessions
 - Explicit HTTP/3 timeline filters (Requests only / Control only)
 
 ---
@@ -67,9 +86,9 @@ Initial client-only Chromium net-export analyzer for HTTP/2 and HTTP/3 (QUIC).
 
 ### Added — Documentation
 
-- Root [README.md](README.md) — product overview, capture, privacy, architecture, jq tips, page index
-- Per-page docs: [docs/import.md](docs/import.md), [docs/overview.md](docs/overview.md), [docs/sessions.md](docs/sessions.md), [docs/findings.md](docs/findings.md), [docs/guide.md](docs/guide.md)
-- In-app Guide sections with Chromium / Catapult / related references
+- Root [README.md](README.md) — product overview, capture, privacy, architecture, jq tips, page index, **actionable error** semantics
+- Per-page docs: [docs/import.md](docs/import.md), [docs/overview.md](docs/overview.md) (swimlanes, URL requests, brush), [docs/sessions.md](docs/sessions.md) (Errors only, status, lifecycle), [docs/findings.md](docs/findings.md), [docs/guide.md](docs/guide.md)
+- In-app Guide sections with Chromium / Catapult / related references; **Errors & filters** section
 
 ### Added — Hosting & deployment
 

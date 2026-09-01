@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { findingsForSession } from './diagnosis/runDiagnosis'
-import type { Finding } from './diagnosis/types'
+import type { Finding, TimeBrushRange, UrlRequestSummary } from './diagnosis/types'
 import { useNetlogAnalysis } from './hooks/useNetlogAnalysis'
 import { exportFindingsJson, exportFindingsMarkdown } from './ui/exportFindings'
 import { FindingsPanel } from './ui/FindingsPanel'
@@ -20,6 +20,7 @@ export default function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>()
   const [focusEventIndex, setFocusEventIndex] = useState<number | undefined>()
   const [selectedFindingId, setSelectedFindingId] = useState<string | undefined>()
+  const [timeBrush, setTimeBrush] = useState<TimeBrushRange | null>(null)
 
   const analysis = state.status === 'ready' ? state.analysis : null
 
@@ -49,6 +50,24 @@ export default function App() {
     if (!analysis || selectedSessionId === undefined) return []
     return findingsForSession(analysis.findings, selectedSessionId)
   }, [analysis, selectedSessionId])
+
+  function openSession(sessionId: number, eventIndex?: number) {
+    setSelectedSessionId(sessionId)
+    setTab('sessions')
+    setFocusEventIndex(eventIndex)
+  }
+
+  function openUrlRequest(req: UrlRequestSummary) {
+    const sessionId = req.relatedSessionIds[0]
+    if (sessionId !== undefined) {
+      openSession(sessionId, req.evidenceEventIndex)
+    }
+  }
+
+  function openSessionsTab(brush?: TimeBrushRange | null) {
+    if (brush) setTimeBrush(brush)
+    setTab('sessions')
+  }
 
   function openFinding(f: Finding) {
     setSelectedFindingId(f.id)
@@ -140,6 +159,7 @@ export default function App() {
             onClick={() => {
               reset()
               setSelectedSessionId(undefined)
+              setTimeBrush(null)
               setShowGuide(false)
               setTab('overview')
             }}
@@ -153,8 +173,12 @@ export default function App() {
         {tab === 'overview' && (
           <Overview
             analysis={analysis}
+            timeBrush={timeBrush}
+            onTimeBrushChange={setTimeBrush}
             onOpenFindings={() => setTab('findings')}
-            onOpenSessions={() => setTab('sessions')}
+            onOpenSessions={openSessionsTab}
+            onSelectSession={openSession}
+            onSelectUrlRequest={openUrlRequest}
           />
         )}
 
@@ -177,7 +201,11 @@ export default function App() {
           <div className="sessions-layout">
             <SessionsTable
               sessions={analysis.sessionSummaries}
+              transferSessions={analysis.sessions}
+              findings={analysis.findings}
               selectedId={selectedSessionId}
+              timeBrush={timeBrush}
+              onClearTimeBrush={() => setTimeBrush(null)}
               onSelect={(id) => {
                 setSelectedSessionId(id)
                 setFocusEventIndex(undefined)

@@ -1,16 +1,36 @@
 import type { TransferAnalysis } from '../diagnosis/runDiagnosis'
-import type { Finding } from '../diagnosis/types'
+import type { Finding, TimeBrushRange, UrlRequestSummary } from '../diagnosis/types'
+import { countSessionsWithActionableIssues } from '../model/sessionIssues'
+
+import { SessionSwimlanes } from './SessionSwimlanes'
+import { UrlRequestsTable } from './UrlRequestsTable'
 
 interface Props {
   analysis: TransferAnalysis
+  timeBrush: TimeBrushRange | null
+  onTimeBrushChange: (range: TimeBrushRange | null) => void
   onOpenFindings: () => void
-  onOpenSessions: () => void
+  onOpenSessions: (timeBrush?: TimeBrushRange | null) => void
+  onSelectSession: (sessionId: number, eventIndex?: number) => void
+  onSelectUrlRequest: (req: UrlRequestSummary) => void
 }
 
-export function Overview({ analysis, onOpenFindings, onOpenSessions }: Props) {
+export function Overview({
+  analysis,
+  timeBrush,
+  onTimeBrushChange,
+  onOpenFindings,
+  onOpenSessions,
+  onSelectSession,
+  onSelectUrlRequest,
+}: Props) {
   const h2 = analysis.sessionSummaries.filter((s) => s.protocol === 'h2').length
   const h3 = analysis.sessionSummaries.filter((s) => s.protocol === 'h3').length
-  const errored = analysis.sessionSummaries.filter((s) => s.hasError).length
+  const errored = countSessionsWithActionableIssues(
+    analysis.sessionSummaries,
+    analysis.sessions,
+    analysis.findings,
+  )
   const top = analysis.findings.slice(0, 5)
 
   return (
@@ -27,8 +47,29 @@ export function Overview({ analysis, onOpenFindings, onOpenSessions }: Props) {
           emphasize={analysis.findings.length > 0}
           onClick={onOpenFindings}
         />
-        <Stat label="Sessions w/ errors" value={String(errored)} emphasize={errored > 0} />
+        <Stat
+          label="Sessions w/ errors"
+          value={String(errored)}
+          emphasize={errored > 0}
+          title="Critical/error findings or non-benign protocol error events (excludes normal close and CANCEL)"
+        />
       </div>
+
+      <SessionSwimlanes
+        summaries={analysis.sessionSummaries}
+        sessions={analysis.sessions}
+        findings={analysis.findings}
+        timeBrush={timeBrush}
+        onTimeBrushChange={onTimeBrushChange}
+        onSelectSession={onSelectSession}
+        onViewSessionsInBrush={() => onOpenSessions(timeBrush)}
+      />
+
+      <UrlRequestsTable
+        requests={analysis.urlRequests}
+        timeBrush={timeBrush}
+        onSelect={onSelectUrlRequest}
+      />
 
       <section className="panel">
         <div className="panel-head">
@@ -56,23 +97,25 @@ function Stat({
   value,
   emphasize,
   onClick,
+  title,
 }: {
   label: string
   value: string
   emphasize?: boolean
   onClick?: () => void
+  title?: string
 }) {
   const className = `stat${emphasize ? ' stat--alert' : ''}${onClick ? ' stat--click' : ''}`
   if (onClick) {
     return (
-      <button type="button" className={className} onClick={onClick}>
+      <button type="button" className={className} onClick={onClick} title={title}>
         <span className="stat-value">{value}</span>
         <span className="stat-label">{label}</span>
       </button>
     )
   }
   return (
-    <div className={className}>
+    <div className={className} title={title}>
       <span className="stat-value">{value}</span>
       <span className="stat-label">{label}</span>
     </div>

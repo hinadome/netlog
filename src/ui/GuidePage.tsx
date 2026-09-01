@@ -18,6 +18,7 @@ export function GuidePage() {
         <a href="#guide-http3-streams">HTTP/3 local/peer</a>
         <a href="#guide-transport-model">H2 vs H3 transport</a>
         <a href="#dependencies">Dependencies</a>
+        <a href="#guide-errors">Errors &amp; filters</a>
         <a href="#how-lens">What this app does</a>
         <a href="#references">References</a>
       </nav>
@@ -320,8 +321,79 @@ HTTP2_SESSION source.id = 218
   SEND_RST_STREAM  stream_id=9  error_code="1 (PROTOCOL_ERROR)"`}</pre>
       </section>
 
+      <section id="guide-errors" className="guide-section panel">
+        <h2>8. What counts as an error?</h2>
+        <p>
+          Not every RST or connection close is a bug. Netlog Lens separates{' '}
+          <strong>actionable</strong> issues (worth filtering on) from <strong>benign</strong>{' '}
+          protocol control flow (normal close, navigation cancel).
+        </p>
+        <table className="guide-table">
+          <thead>
+            <tr>
+              <th>UI</th>
+              <th>What it includes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Errors only</strong> (Overview swimlanes, Sessions list)
+              </td>
+              <td>
+                Critical or error <strong>findings</strong>, or <strong>actionable</strong> protocol
+                events on the session
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Sessions w/ errors</strong> (Overview stat)
+              </td>
+              <td>Same actionable count — not <code>summary.hasError</code> alone</td>
+            </tr>
+            <tr>
+              <td>Status <span className="err-tag">error</span></td>
+              <td>Qualifies for Errors only</td>
+            </tr>
+            <tr>
+              <td>Status <span className="warn-tag">warning</span></td>
+              <td>
+                Softer signals (e.g. flow-control or PING findings, or internal flags) — visible in
+                the list but <em>not</em> in Errors only
+              </td>
+            </tr>
+            <tr>
+              <td>Timeline density <strong>Errors</strong></td>
+              <td>
+                Actionable error-like events from the catalog + finding evidence; benign closes and
+                CANCEL resets are excluded
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>Benign — excluded from Errors only</h3>
+        <ul>
+          <li>
+            <code>QUIC_SESSION_CLOSED</code> — normal QUIC connection end
+          </li>
+          <li>
+            RST / reset with <code>NO_ERROR</code> or <code>CANCEL</code> (HTTP/2 error codes{' '}
+            <code>0</code> and <code>8</code>)
+          </li>
+          <li>HTTP/2 session close with ok net error</li>
+        </ul>
+        <div className="guide-callout">
+          <strong>Why a session might look “clean” on the timeline.</strong> Default density is{' '}
+          <strong>Hide noise</strong>, which hides routine WINDOW_UPDATE and ping traffic. Warning
+          findings also do not appear under Errors only. Use density <strong>All</strong> or{' '}
+          <strong>Search all</strong> to inspect everything. After the actionable-error rules, a
+          session in Errors only should show at least one critical/error finding or a visible Errors
+          row.
+        </div>
+      </section>
+
       <section id="how-lens" className="guide-section panel">
-        <h2>8. What Netlog Lens shows you</h2>
+        <h2>9. What Netlog Lens shows you</h2>
         <table className="guide-table">
           <thead>
             <tr>
@@ -353,6 +425,14 @@ HTTP2_SESSION source.id = 218
               <td>One netlog event on that session source, time-ordered</td>
             </tr>
             <tr>
+              <td>Overview swimlane</td>
+              <td>Session lifetime bar; markers at finding evidence times</td>
+            </tr>
+            <tr>
+              <td>Errors only filter</td>
+              <td>Actionable findings + protocol events (see section 8)</td>
+            </tr>
+            <tr>
               <td>Finding highlight</td>
               <td>Rule matched an event index; click jumps to that timeline row</td>
             </tr>
@@ -368,7 +448,7 @@ HTTP2_SESSION source.id = 218
       </section>
 
       <section id="references" className="guide-section panel">
-        <h2>9. References</h2>
+        <h2>10. References</h2>
         <p>
           Concepts on this page follow Chromium&apos;s netlog design and public write-ups. Use these
           when you want the canonical definitions or deeper debugging examples.

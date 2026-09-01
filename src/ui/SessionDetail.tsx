@@ -6,6 +6,7 @@ import type { NetlogEvent } from '../parser/types'
 import { EventInspector } from './EventInspector'
 import { FindingsPanel } from './FindingsPanel'
 import { Timeline } from './Timeline'
+import { StreamLifecycleBars } from './StreamLifecycleBars'
 import { TransportModel } from './TransportModel'
 
 interface Props {
@@ -141,6 +142,18 @@ export function SessionDetail({
         onOpenGuide={
           onOpenStreamGuide ? () => onOpenStreamGuide('guide-transport-model') : undefined
         }
+      />
+
+      <StreamLifecycleBars
+        session={session}
+        streamFilter={streamFilter}
+        onSelectStream={(streamId, eventIndex) => {
+          setStreamFilter((prev) => (prev === streamId ? 'all' : streamId))
+          if (eventIndex !== undefined) {
+            const ev = session.events.find((e) => e.index === eventIndex)
+            if (ev) setSelected(ev)
+          }
+        }}
       />
 
       <div className="session-grid">

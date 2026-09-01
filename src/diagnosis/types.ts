@@ -27,6 +27,7 @@ export interface AnalysisResult {
   findings: Finding[]
   /** Serialized-friendly session summaries for worker transfer. */
   sessionSummaries: SessionSummary[]
+  urlRequests: UrlRequestSummary[]
 }
 
 export interface SessionSummary {
@@ -43,6 +44,25 @@ export interface SessionSummary {
   error?: string
   negotiatedProtocol?: string
   quicVersion?: string
+}
+
+/** Serializable URL_REQUEST row for UI tables. */
+export interface UrlRequestSummary {
+  sourceId: number
+  url?: string
+  method?: string
+  netError?: string
+  netErrorCode?: number
+  startTimeMs: number
+  endTimeMs: number
+  relatedSessionIds: number[]
+  /** Global event index for jump-to-evidence (usually URL_REQUEST END). */
+  evidenceEventIndex?: number
+}
+
+export interface TimeBrushRange {
+  startMs: number
+  endMs: number
 }
 
 export interface SessionDetailPayload {

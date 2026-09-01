@@ -1,6 +1,7 @@
 import type { NetlogEvent, ParsedNetlog } from '../parser/types'
 import { sourcesOfType } from '../parser/indexSources'
 import type { ProtocolSession, SessionStream } from './http2Session'
+import { isBenignResetOrCloseCode } from './sessionIssues'
 
 function sourceDependencyId(params: Record<string, unknown>): number | undefined {
   const dep = params.source_dependency
@@ -83,9 +84,15 @@ function applyQuicEvent(session: ProtocolSession, ev: NetlogEvent): void {
   const dep = sourceDependencyId(p)
   if (dep !== undefined) session.relatedSourceIds.push(dep)
 
-  if (ev.type === 'QUIC_SESSION_CLOSED' || ev.type === 'QUIC_SESSION_CLOSE_ON_ERROR') {
+  if (ev.type === 'QUIC_SESSION_CLOSE_ON_ERROR') {
     session.hasError = true
-    session.error = String(p.details ?? p.net_error ?? p.quic_error ?? 'session closed')
+    session.error = String(p.details ?? p.net_error ?? p.quic_error ?? 'session closed with error')
+  } else if (ev.type === 'QUIC_SESSION_CLOSED') {
+    const netError = p.net_error
+    if (typeof netError === 'number' && netError < 0) {
+      session.hasError = true
+      session.error = String(netError)
+    }
   }
 
   if (
@@ -132,10 +139,13 @@ function applyQuicEvent(session: ProtocolSession, ev: NetlogEvent): void {
     }
 
     if (ev.type.includes('RST') || ev.type.includes('RESET_STREAM') || ev.type.includes('STOP_SENDING')) {
-      stream.rstError = String(p.quic_rst_stream_error ?? p.error_code ?? p.quic_error ?? 'RST')
+      const code = String(p.quic_rst_stream_error ?? p.error_code ?? p.quic_error ?? 'RST')
+      stream.rstError = code
       stream.rstDirection = ev.type.includes('SEND') || ev.type.includes('SENT') ? 'sent' : 'received'
-      stream.hasError = true
-      session.hasError = true
+      if (!isBenignResetOrCloseCode(code)) {
+        stream.hasError = true
+        session.hasError = true
+      }
     }
 
     if (ev.type.includes('DATA') || ev.type.includes('STREAM_FRAME')) {

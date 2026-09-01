@@ -25,6 +25,7 @@ Deep links / anchors used by the app:
 | `#guide-http3-streams` | HTTP/3 `id % 4` local/peer uni/bidi |
 | `#guide-transport-model` | H2 shared TCP HOL vs H3 independence |
 | `#dependencies` | `source_dependency` / related sources |
+| `#guide-errors` | Actionable vs benign errors; Errors only filter |
 | `#how-lens` | End-to-end pipeline summary |
 | `#references` | External Chromium / Catapult pointers |
 
@@ -80,9 +81,27 @@ Matches the Transport model panel on [Sessions](sessions.md).
 
 Events may reference other sources (`source_dependency`, related ids). Lens uses correlation to tie URL requests and failed net errors to protocol sessions when possible.
 
-### 8. What Lens does
+### 8. What counts as an error
 
-Parse → index sources → build H2/QUIC models → run rules → present Overview / Sessions / Findings with timeline catalog + inspector stories.
+Lens distinguishes **actionable** errors (investigation targets) from **benign** control flow:
+
+| UI | Includes |
+|----|----------|
+| **Errors only** (Overview swimlanes, Sessions list) | Critical/error **findings** or **actionable** protocol events on the session |
+| **Sessions w/ errors** stat | Same actionable count |
+| **Status: error** | Qualifies for Errors only |
+| **Status: warning** | Internal `hasError` and/or **warning** findings (flow control, PING) — not Errors only |
+| Timeline **Errors** density | Actionable error-like catalog events + finding evidence |
+
+**Benign (excluded from Errors only):** `QUIC_SESSION_CLOSED`; RST/reset with `NO_ERROR` or `CANCEL` (codes 0 / 8); ok HTTP/2 session close.
+
+`summary.hasError` on the session model can still be true for softer cases — that is why the list can show **warning** while Errors only hides the row.
+
+Full detail: [Sessions → Errors only vs timeline](sessions.md#errors-only-vs-timeline).
+
+### 9. What Lens does
+
+Parse → index sources → build H2/QUIC models → run rules → present Overview (stats, swimlanes, URL requests) / Sessions / Findings with timeline catalog + inspector stories.
 
 ---
 

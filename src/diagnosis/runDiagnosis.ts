@@ -1,4 +1,4 @@
-import { buildUrlRequests, correlateSessions } from '../model/correlate'
+import { buildUrlRequests, correlateSessions, type UrlRequestInfo } from '../model/correlate'
 import { buildHttp2Sessions, type ProtocolSession, type SessionStream } from '../model/http2Session'
 import { buildQuicSessions } from '../model/quicSession'
 import type { ParsedNetlog } from '../parser/types'
@@ -12,7 +12,7 @@ import {
   ruleUrlRequestErrors,
 } from './rules/http2Rules'
 import { resetQuicFindingIds, ruleQuicConnectionClose, ruleQuicHandshake } from './rules/quicRules'
-import type { AnalysisResult, Finding, SessionSummary } from './types'
+import type { AnalysisResult, Finding, SessionSummary, UrlRequestSummary } from './types'
 
 const SEVERITY_ORDER: Record<Finding['severity'], number> = {
   critical: 0,
@@ -50,6 +50,23 @@ export interface TransferAnalysis {
   findings: Finding[]
   sessionSummaries: SessionSummary[]
   sessions: TransferSession[]
+  urlRequests: UrlRequestSummary[]
+}
+
+function toUrlRequestSummary(req: UrlRequestInfo): UrlRequestSummary {
+  const endEv = [...req.events].reverse().find((e) => e.params.net_error !== undefined)
+  const lastEv = req.events[req.events.length - 1]
+  return {
+    sourceId: req.sourceId,
+    url: req.url,
+    method: req.method,
+    netError: req.netError,
+    netErrorCode: req.netErrorCode,
+    startTimeMs: req.startTimeMs,
+    endTimeMs: req.endTimeMs,
+    relatedSessionIds: [...req.relatedSessionIds],
+    evidenceEventIndex: endEv?.index ?? lastEv?.index,
+  }
 }
 
 function collectSessionPaths(s: ProtocolSession): string[] {
@@ -147,6 +164,7 @@ export function runDiagnosis(
     failedUrlRequestCount,
     findings,
     sessionSummaries: allSessions.map(toSummary),
+    urlRequests: [...urlRequests.values()].map(toUrlRequestSummary),
   }
 }
 
@@ -159,6 +177,7 @@ export function toTransferAnalysis(result: AnalysisResult): TransferAnalysis {
     findings: result.findings,
     sessionSummaries: result.sessionSummaries,
     sessions: [...result.http2Sessions, ...result.quicSessions].map(toTransfer),
+    urlRequests: result.urlRequests,
   }
 }
 

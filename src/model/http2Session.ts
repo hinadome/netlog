@@ -1,5 +1,6 @@
 import type { NetlogEvent, ParsedNetlog, SourceEntry } from '../parser/types'
 import { sourcesOfType } from '../parser/indexSources'
+import { isBenignResetOrCloseCode } from './sessionIssues'
 
 export type ProtocolKind = 'h2' | 'h3'
 
@@ -225,11 +226,14 @@ function applyHttp2Event(session: ProtocolSession, ev: NetlogEvent): void {
     }
 
     if (ev.type === 'HTTP2_SESSION_SEND_RST_STREAM' || ev.type === 'HTTP2_SESSION_RECV_RST_STREAM') {
-      stream.rstError = String(p.error_code ?? p.error ?? 'RST_STREAM')
+      const code = String(p.error_code ?? p.error ?? 'RST_STREAM')
+      stream.rstError = code
       stream.rstDescription = typeof p.description === 'string' ? p.description : undefined
       stream.rstDirection = ev.type.includes('SEND') ? 'sent' : 'received'
-      stream.hasError = true
-      session.hasError = true
+      if (!isBenignResetOrCloseCode(code)) {
+        stream.hasError = true
+        session.hasError = true
+      }
     }
   }
 

@@ -69,5 +69,7 @@ describe('netlog parser + diagnosis', () => {
     expect(transfer.sessions.length).toBe(2)
     expect(transfer.sessions[0].streams.length).toBeGreaterThan(0)
     expect(transfer.findings.length).toBeGreaterThan(0)
+    expect(transfer.urlRequests.length).toBeGreaterThan(0)
+    expect(transfer.urlRequests.some((r) => r.netError)).toBe(true)
   })
 })
