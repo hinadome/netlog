@@ -72,6 +72,7 @@ Short index: [deploy/README.md](deploy/README.md).
 
 | Page | Role | Detail |
 |------|------|--------|
+| [Application Concept](docs/concept.md) | Why we use events (vs appspot / `polledData`) | Design decision |
 | [Import](docs/import.md) | Drop / choose netlog JSON; progress & privacy notes | First screen before analysis |
 | [Overview](docs/overview.md) | Findings-first dashboard: top findings → URL requests → timeline → waterfall → retry chains | Default after parse |
 | [Sessions](docs/sessions.md) | Session list + detail (host/path filter, lifecycle, SETTINGS/GOAWAY, timeline, inspector) | Main drill-down UI |
@@ -173,6 +174,7 @@ jq '
 
 ## Docs index
 
+- [Application Concept](docs/concept.md) — why events (vs netlog-viewer.appspot.com / `polledData`)
 - [Import](docs/import.md)
 - [Overview](docs/overview.md)
 - [Sessions](docs/sessions.md)

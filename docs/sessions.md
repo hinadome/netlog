@@ -207,6 +207,7 @@ Annotated view of the selected timeline event (not raw JSON by default).
 
 ## Related
 
+- [Application Concept](concept.md) — why Sessions are event-derived (vs appspot)
 - [Findings](findings.md) — global list that jumps here
 - [Guide](guide.md) — IDs, H2 vs H3, transport, error semantics
 - [Overview](overview.md) — swimlanes, URL requests, time brush

@@ -109,6 +109,7 @@ Parse → index sources → build H2/QUIC models → run rules → present Overv
 
 ## Related
 
+- [Application Concept](concept.md) — events vs `polledData` / netlog-viewer.appspot.com
 - [Import](import.md) — load a file or open Guide early
 - [Sessions](sessions.md) — apply these concepts while debugging
 - [README](../README.md) — capture, privacy, architecture
