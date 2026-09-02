@@ -97,6 +97,8 @@ Lens distinguishes **actionable** errors (investigation targets) from **benign**
 
 `summary.hasError` on the session model can still be true for softer cases — that is why the list can show **warning** while Errors only hides the row.
 
+Default timeline density is **Hide noise** (routine `WINDOW_UPDATE` / ping hidden). Session detail **Jump to first window update** switches to **All** and scrolls to that event — see [Sessions → Flow-control window](sessions.md#flow-control-window).
+
 Full detail: [Sessions → Errors only vs timeline](sessions.md#errors-only-vs-timeline).
 
 ### 9. What Lens does

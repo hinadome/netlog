@@ -2,6 +2,7 @@ import { eventStreamId } from './eventCatalog'
 import type { NetlogEvent } from '../parser/types'
 
 export interface FlowControlPoint {
+  eventIndex: number
   timeMs: number
   windowSize: number
   streamId?: number
@@ -28,6 +29,7 @@ export function buildFlowControlSeries(events: NetlogEvent[]): FlowControlPoint[
     if (windowSize === undefined) continue
 
     points.push({
+      eventIndex: ev.index,
       timeMs: ev.timeMs,
       windowSize,
       streamId: eventStreamId(ev),
@@ -35,5 +37,5 @@ export function buildFlowControlSeries(events: NetlogEvent[]): FlowControlPoint[
     })
   }
 
-  return points.sort((a, b) => a.timeMs - b.timeMs)
+  return points.sort((a, b) => a.timeMs - b.timeMs || a.eventIndex - b.eventIndex)
 }

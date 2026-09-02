@@ -156,6 +156,43 @@ export function Timeline({
     return rows.findIndex((r) => r.kind === 'event' && r.event.index === selectedIndex)
   }, [rows, selectedIndex])
 
+  // External jumps (flow-control, SETTINGS, findings, First error) select events that may be
+  // hidden by density / stream filters — widen filters so scroll-to-selection can work.
+  useEffect(() => {
+    if (selectedIndex === undefined) return
+    const ev = events.find((e) => e.index === selectedIndex)
+    if (!ev) return
+
+    if (streamFilter !== 'all' && eventStreamId(ev) !== streamFilter) {
+      setStreamFilter('all')
+    }
+
+    if (protocol === 'h3' && h3KindFilter !== 'all') {
+      if (!matchesH3KindFilter(eventStreamId(ev), h3KindFilter)) {
+        setH3KindFilter('all')
+      }
+    }
+
+    if (density === 'signal' && isNoiseEvent(ev) && !highlightIndexes.has(ev.index)) {
+      setDensity('all')
+    } else if (
+      density === 'errors' &&
+      !isActionableErrorEvent(ev) &&
+      !highlightIndexes.has(ev.index)
+    ) {
+      setDensity('all')
+    }
+  }, [
+    selectedIndex,
+    events,
+    streamFilter,
+    density,
+    highlightIndexes,
+    protocol,
+    h3KindFilter,
+    setStreamFilter,
+  ])
+
   useEffect(() => {
     if (highlightPos >= 0) {
       virtualizer.scrollToIndex(highlightPos, { align: 'center' })

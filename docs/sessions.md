@@ -7,7 +7,8 @@ Main investigation workspace: session list + selected session detail.
 ```
 ┌─────────────────┬──────────────────────────────────────────┐
 │ Sessions table  │ Session detail                           │
-│ (filters)       │ header · transport · streams · findings  │
+│ (filters)       │ header · SETTINGS/GOAWAY · flow sparkline│
+│                 │ transport · streams · findings           │
 │                 │ lifecycle bars · timeline + inspector    │
 └─────────────────┴──────────────────────────────────────────┘
 ```
@@ -94,8 +95,21 @@ If a session appears under Errors only, you should see at least one critical/err
   - **HTTP/2:** Requests / Local / Peer / Conn (odd = client, even = peer, `0` = connection)
   - **HTTP/3:** Requests / Local uni / Peer uni / Peer bidi (`stream_id % 4`)
 - Links into Guide sections for stream ID teaching
+- **Export session MD** — narrative markdown for this session and its findings
 
 Negative `stream_id` values (e.g. `-1`) are Chromium sentinels (often connection-level), not real request streams — they are classified as connection/unset and are not listed as normal stream rows.
+
+### SETTINGS & GOAWAY
+
+Shows negotiated ALPN when known, sent vs received HTTP/2 SETTINGS (mismatches highlighted), and GOAWAY frames. Jump links open the related event in the timeline/inspector.
+
+### Flow-control window
+
+Sparkline of `WINDOW_UPDATE` / window-size samples over the session (shown when there are at least two points).
+
+**Jump to first window update** selects the first sample’s event, scrolls the **Event timeline** into view, and focuses that row in the inspector.
+
+Because `WINDOW_UPDATE` is **noise** under default **Hide noise**, the jump automatically switches density to **All** (and clears a conflicting stream filter) so the target is visible. External jumps from SETTINGS/GOAWAY, findings, and **First error** use the same reveal behavior when the selected event would otherwise be filtered out.
 
 ### Transport model
 
@@ -157,8 +171,11 @@ Without Search all, search only runs on events that already pass density + strea
 
 ### Other controls
 
+- **First error** — jump to the first actionable error event in this session (when any)
+- **j / k** — next / previous visible event (when a row is selected)
 - **Idle gaps** — insert markers when consecutive visible events are far apart (default gap threshold ~1s)
 - **Stream chips** — filter to one stream id (same state as streams table)
+- **H3 Requests / Control** — when protocol is HTTP/3, filter by stream kind
 - Finding evidence events are highlighted; selecting scrolls the virtual list to that row
 
 Each row shows relative time (`+N ms` from session start), severity styling, cause/follow-up badges when the story graph links events, and optional finding badges.

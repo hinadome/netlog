@@ -388,7 +388,9 @@ HTTP2_SESSION source.id = 218
           findings also do not appear under Errors only. Use density <strong>All</strong> or{' '}
           <strong>Search all</strong> to inspect everything. After the actionable-error rules, a
           session in Errors only should show at least one critical/error finding or a visible Errors
-          row.
+          row. Session detail <strong>Jump to first window update</strong> (flow-control panel)
+          selects the first WINDOW_UPDATE and switches to <strong>All</strong> automatically so the
+          event is visible.
         </div>
       </section>
 

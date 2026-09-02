@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TransferSession } from '../diagnosis/runDiagnosis'
 import type { Finding } from '../diagnosis/types'
 import { findFirstActionableErrorIndex } from '../model/sessionIssues'
@@ -34,6 +34,7 @@ export function SessionDetail({
 }: Props) {
   const [selected, setSelected] = useState<NetlogEvent | undefined>()
   const [streamFilter, setStreamFilter] = useState<number | 'all'>('all')
+  const timelineSectionRef = useRef<HTMLElement | null>(null)
 
   const highlightIndexes = useMemo(() => {
     const set = new Set<number>()
@@ -64,7 +65,14 @@ export function SessionDetail({
 
   const jumpToIndex = (eventIndex: number) => {
     const ev = session.events.find((e) => e.index === eventIndex)
-    if (ev) setSelected(ev)
+    if (ev) {
+      setSelected(ev)
+      setStreamFilter('all')
+      // Scroll the timeline into view — sparkline / SETTINGS sit above it.
+      requestAnimationFrame(() => {
+        timelineSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
+    }
   }
 
   useEffect(() => {
@@ -165,10 +173,7 @@ export function SessionDetail({
       <FlowControlSparkline
         session={session}
         baseTimeMs={session.startTimeMs}
-        onSelectTime={(timeMs) => {
-          const ev = session.events.find((e) => e.timeMs >= timeMs)
-          if (ev) setSelected(ev)
-        }}
+        onJumpToEvent={jumpToIndex}
       />
 
       <TransportModel
@@ -275,7 +280,7 @@ export function SessionDetail({
         </section>
       </div>
 
-      <section className="panel">
+      <section className="panel" ref={timelineSectionRef}>
         <div className="panel-head">
           <h3>Event timeline</h3>
           {streamFilter !== 'all' && (

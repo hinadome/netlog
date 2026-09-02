@@ -102,9 +102,11 @@ On the **Sessions** tab, the top-left search box matches **host or request path*
 
 ### Session detail extras
 
-- Stream **lifecycle bars**, **SETTINGS & GOAWAY** panel, **flow-control sparkline**
+- Stream **lifecycle bars**, **SETTINGS & GOAWAY** panel, **flow-control sparkline** (**Jump to first window update** opens that event in the timeline; switches off **Hide noise** if needed)
 - Timeline: H3 **Requests / Control** filters, **First error** jump, `j`/`k` navigation
 - Event inspector: **jq** copy helpers · **Export session MD**
+
+Details: [docs/sessions.md](docs/sessions.md#flow-control-window).
 
 ## What counts as an error?
 

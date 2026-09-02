@@ -38,6 +38,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- **Jump to first window update** (flow-control sparkline) selects the first `WINDOW_UPDATE` event, scrolls the timeline into view, and switches density to **All** when Hide noise would hide it; other external jumps (SETTINGS/GOAWAY, findings, First error) reveal filtered targets the same way
 - **Errors only** (Overview swimlanes + Sessions list) and **Sessions w/ errors** stat use **actionable** error logic aligned with timeline **Errors** density
 - `summary.hasError` no longer drives Errors-only filtering alone
 - **Search all** on the session timeline searches the whole session when checked
@@ -46,7 +47,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Documentation
 
 - [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts — investigation features and Overview workflow
-- [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md)
+- [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — including flow-control jump / timeline reveal
 - In-app **Guide** — “Errors & filters” section
 
 ### Planned / not yet implemented

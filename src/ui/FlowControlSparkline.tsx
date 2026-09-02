@@ -5,10 +5,10 @@ import { buildFlowControlSeries } from '../model/flowControlSparkline'
 interface Props {
   session: TransferSession
   baseTimeMs: number
-  onSelectTime?: (timeMs: number) => void
+  onJumpToEvent?: (eventIndex: number) => void
 }
 
-export function FlowControlSparkline({ session, baseTimeMs, onSelectTime }: Props) {
+export function FlowControlSparkline({ session, baseTimeMs, onJumpToEvent }: Props) {
   const points = useMemo(() => buildFlowControlSeries(session.events), [session.events])
 
   if (points.length < 2) return null
@@ -45,11 +45,11 @@ export function FlowControlSparkline({ session, baseTimeMs, onSelectTime }: Prop
         <span>0 ms</span>
         <span>{Math.round(maxT - baseTimeMs)} ms</span>
       </div>
-      {onSelectTime && (
+      {onJumpToEvent && (
         <button
           type="button"
           className="linkish small"
-          onClick={() => onSelectTime(points[0].timeMs)}
+          onClick={() => onJumpToEvent(points[0].eventIndex)}
         >
           Jump to first window update
         </button>
