@@ -77,11 +77,103 @@ We forgo appspot’s free **DNS**, **Alternate Service Mappings**, **Queued repo
 | Many `URL_REQUEST` / `SOCKET` sources | Visible in Events | Not on Sessions; URLs on Overview when correlated |
 | Need DNS cache / alt-svc / pools | Proxy / DNS / related pages | Not shown yet |
 
-**jq check** whether a source id is event-backed:
+### jq: count session ids in `polledData` vs events
+
+Replace `chrome-net-export-log.json` with your file. Chromium writes HTTP/2 snapshots to `polledData.spdySessionInfo` (each row has `source_id`). QUIC snapshots are `polledData.quicInfo.sessions` — modern Chrome usually has `connection_id`, **not** `source_id`, so QUIC counts are **row vs source-id**, not a 1:1 join. Some `--log-net-log` dumps attach `polledData` as an **array** of contexts.
+
+**How to read the diff**
+
+| Result | Meaning |
+|--------|---------|
+| **only_in_polledData** | Appspot H2 table rows with no event stream → Lens will not list them |
+| **only_in_events** | Closed/historical H2 sessions still in the log → Lens shows them; snapshot often does not |
+| QUIC `polled_quic_sessions` vs `events_quic` | Snapshot **row count** vs unique `QUIC_SESSION` **source ids** — IDs usually do not match |
+
+**Full compare (H2 source-id join + QUIC counts)**
 
 ```bash
-jq '[.events[] | select(.source.id == 4323812)] | length' chrome-net-export-log.json
+jq '
+  .constants.logSourceType as $st
+
+  | (.polledData // {}) as $pd0
+  | (if ($pd0 | type) == "array" then $pd0 else [$pd0] end) as $pds
+
+  | [
+      $pds[]
+      | (.spdySessionInfo // [])[]
+      | .source_id
+      | select(. != null)
+    ] as $h2_polled
+
+  | [
+      $pds[]
+      | (.quicInfo.sessions // [])[]
+      | (.source_id // .connection_id)
+      | select(. != null)
+    ] as $quic_polled
+
+  | [
+      .events[]
+      | select(.source.type == $st.HTTP2_SESSION)
+      | .source.id
+    ] | unique as $h2_events
+
+  | [
+      .events[]
+      | select(.source.type == $st.QUIC_SESSION)
+      | .source.id
+    ] | unique as $quic_events
+
+  | ($h2_polled | unique) as $h2p
+  | ($quic_polled | unique) as $qp
+
+  | {
+      http2: {
+        polledData_source_ids: ($h2p | length),
+        events_source_ids: ($h2_events | length),
+        only_in_polledData: ($h2p - $h2_events),
+        only_in_events: ($h2_events - $h2p)
+      },
+      quic: {
+        note: "Modern quicInfo.sessions usually has connection_id, not source_id — only_in_* is not 1:1 with Lens session ids.",
+        polledData_rows: ($qp | length),
+        events_source_ids: ($quic_events | length),
+        polled_ids_sample: ($qp[:8]),
+        event_source_ids_sample: ($quic_events[:8])
+      }
+    }
+' chrome-net-export-log.json
 ```
+
+**Counts only**
+
+```bash
+jq '
+  .constants.logSourceType as $st
+  | {
+      polled_h2: ((.polledData.spdySessionInfo // []) | map(.source_id) | unique | length),
+      events_h2: ([.events[] | select(.source.type == $st.HTTP2_SESSION) | .source.id] | unique | length),
+      polled_quic_sessions: ((.polledData.quicInfo.sessions // []) | length),
+      events_quic: ([.events[] | select(.source.type == $st.QUIC_SESSION) | .source.id] | unique | length)
+    }
+' chrome-net-export-log.json
+```
+
+**One source id** (example `4323812`)
+
+```bash
+jq --argjson id 4323812 '
+  .constants.logSourceType as $st
+  | {
+      in_events: ([.events[] | select(.source.id == $id)] | length),
+      event_source_type: ([.events[] | select(.source.id == $id)][0].source.type),
+      in_h2_polled: ((.polledData.spdySessionInfo // []) | map(select(.source_id == $id)) | length),
+      in_quic_polled: ((.polledData.quicInfo.sessions // []) | map(select(.source_id == $id)) | length)
+    }
+' chrome-net-export-log.json
+```
+
+If `in_events` is `0` but appspot still lists the session, it is snapshot-only (`polledData`). If `in_events` is greater than 0, Lens can model it as a Session (when the source type is `HTTP2_SESSION` or `QUIC_SESSION`).
 
 See also [README → Extracting a raw event with jq](../README.md#extracting-a-raw-event-with-jq).
 

@@ -46,7 +46,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Documentation
 
-- [docs/concept.md](docs/concept.md) — **Application Concept**: event-driven Sessions vs netlog-viewer.appspot.com / `polledData`
+- [docs/concept.md](docs/concept.md) — **Application Concept**: event-driven Sessions vs netlog-viewer.appspot.com / `polledData` (including jq to count/diff session ids)
 - [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts — investigation features and Overview workflow
 - [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — including flow-control jump / timeline reveal
 - In-app **Guide** — “Errors & filters” section
