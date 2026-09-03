@@ -37,6 +37,7 @@ function session(events: NetlogEvent[]): TransferSession {
     events,
     relatedSourceIds: [],
     hasError: true,
+    origin: 'events',
   }
 }
 

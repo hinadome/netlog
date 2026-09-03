@@ -1,6 +1,8 @@
 import type { NetlogEvent, ParsedNetlog, SourceEntry } from '../parser/types'
 import { sourcesOfType } from '../parser/indexSources'
+import type { PolledH2Session } from './polledData'
 import { assignSafeScalar, assignSafeString, isSafeRecordKey } from '../security/safeRecord'
+import type { SessionOrigin } from './sessionOrigin'
 import { isBenignResetOrCloseCode } from './sessionIssues'
 
 export type ProtocolKind = 'h2' | 'h3'
@@ -49,6 +51,10 @@ export interface ProtocolSession {
     details?: string
     fromPeer?: boolean
   }
+  /** events (default) · events+polled · polledOnly */
+  origin?: SessionOrigin
+  /** Chrome polledData.spdySessionInfo row when present. */
+  polledSnapshot?: PolledH2Session
 }
 
 function asRecord(v: unknown): Record<string, unknown> {
@@ -284,6 +290,7 @@ export function buildHttp2Sessions(parsed: ParsedNetlog): ProtocolSession[] {
       events: entry.events,
       relatedSourceIds: [],
       hasError: false,
+      origin: 'events',
     }
 
     for (const ev of entry.events) {

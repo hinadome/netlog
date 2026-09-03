@@ -95,6 +95,7 @@ export function parseNetlogJson(
     sources,
     fileName,
     eventCount: events.length,
+    polledData: data.polledData ?? null,
   }
 }
 

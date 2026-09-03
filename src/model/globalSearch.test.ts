@@ -60,9 +60,12 @@ const analysis: TransferAnalysis = {
       ],
       relatedSourceIds: [],
       hasError: true,
+      origin: 'events',
     },
   ],
   urlRequests: [],
+  polledOnlySessionCount: 0,
+  polledEnrichedCount: 0,
 }
 
 describe('globalSearch', () => {

@@ -181,6 +181,7 @@ export function buildQuicSessions(parsed: ParsedNetlog): ProtocolSession[] {
       events: entry.events,
       relatedSourceIds: [],
       hasError: false,
+      origin: 'events',
     }
 
     for (const ev of entry.events) {

@@ -69,4 +69,6 @@ export interface ParsedNetlog {
   sources: Map<number, SourceEntry>
   fileName: string
   eventCount: number
+  /** Raw polledData from net-export (snapshot at Stop); may be object or array. */
+  polledData: unknown
 }

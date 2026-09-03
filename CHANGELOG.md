@@ -9,14 +9,14 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Added
 
-- **Security hardening** — CSP and companion headers on Vercel, Netlify, and nginx deploys; 250 MiB netlog size cap; worker termination on new primary load; self-hosted IBM Plex fonts; URL hash state validated against loaded capture
+- **polledData HTTP/2 enrichment (Phase 1)** — parse `spdySessionInfo`, merge by `source_id` with event sessions, **At export** panel, snapshot-only rows (hidden by default), Overview note
 - **Search** tab — global search across findings, sessions, URL requests, and events (capped for large captures)
 - **Compare** tab — load a second netlog and diff findings counts, failed URLs, and hosts
 - **Overview — request waterfall** — phased timing bars for URL requests
 - **Overview — retry chains** — multiple attempts for the same origin + path
 - **Overview — session timeline (swimlanes)** — per-session bars with finding markers; **Errors only** filter; drag **brush** to narrow by time
 - **Overview — URL requests table** — correlated `URL_REQUEST` rows with failed-only default, search, and brush filter
-- **Sessions** list filter: search by **host or request path** (case-insensitive)
+- **Sessions** list filter: search by **session ID, host, or request path** (case-insensitive substring)
 - **Session detail — stream lifecycle bars** — compact per-stream phase visualization
 - **Session detail — SETTINGS & GOAWAY** panel with mismatch highlighting
 - **Session detail — flow-control sparkline** from WINDOW_UPDATE events
@@ -46,8 +46,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Documentation
 
-- [docs/concept.md](docs/concept.md) — **Application Concept**: event-driven Sessions vs netlog-viewer.appspot.com / `polledData` (including jq to count/diff session ids)
-- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [DEPLOYMENT.md](DEPLOYMENT.md), deploy scripts — investigation features and Overview workflow
+- [docs/concept.md](docs/concept.md), [README.md](README.md) — events-first concept plus Phase 1 HTTP/2 `polledData` merge (Both / Snap badges, At export panel)
+- [DEPLOYMENT.md](DEPLOYMENT.md), [deploy/README.md](deploy/README.md), VM/container `deploy.sh` comments — upgrade notes for polledData merge and Sessions ID filter
 - [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — including flow-control jump / timeline reveal
 - In-app **Guide** — “Errors & filters” section
 

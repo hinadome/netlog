@@ -28,6 +28,8 @@ export interface AnalysisResult {
   /** Serialized-friendly session summaries for worker transfer. */
   sessionSummaries: SessionSummary[]
   urlRequests: UrlRequestSummary[]
+  polledOnlySessionCount: number
+  polledEnrichedCount: number
 }
 
 export interface SessionSummary {
@@ -44,6 +46,9 @@ export interface SessionSummary {
   error?: string
   negotiatedProtocol?: string
   quicVersion?: string
+  origin?: import('../model/sessionOrigin').SessionOrigin
+  /** From polledData when stream list is unavailable (snapshot-only). */
+  polledActiveStreams?: number
 }
 
 /** Serializable URL_REQUEST row for UI tables. */

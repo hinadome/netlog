@@ -68,6 +68,15 @@ export function Overview({
         />
       </div>
 
+      {(analysis.polledOnlySessionCount > 0 || analysis.polledEnrichedCount > 0) && (
+        <p className="polled-overview-note muted small">
+          {analysis.polledEnrichedCount > 0 &&
+            `${analysis.polledEnrichedCount} session${analysis.polledEnrichedCount === 1 ? '' : 's'} enriched with polledData snapshot at export. `}
+          {analysis.polledOnlySessionCount > 0 &&
+            `${analysis.polledOnlySessionCount} snapshot-only HTTP/2 session${analysis.polledOnlySessionCount === 1 ? '' : 's'} (no events) — enable Show snapshot-only on Sessions.`}
+        </p>
+      )}
+
       <section className="panel overview-findings">
         <div className="panel-head">
           <h2>Top findings</h2>

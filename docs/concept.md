@@ -8,7 +8,7 @@ Why **Netlog Lens** builds analysis from the **event stream**, how that differs 
 
 Netlog Lens is for **investigating HTTP/2 and HTTP/3 failures** in a Chromium net-export: reconstruct protocol sessions, surface findings with evidence, and jump to timelines — entirely in the browser.
 
-It is **not** a full clone of `netlog-viewer.appspot.com`. That viewer mirrors much of historical `chrome://net-internals` (DNS cache, socket pools, live session tables, Reporting, etc.). Lens deliberately narrows scope so every “session” you open is something you can **prove from logged activity**.
+It is **not** a full clone of `netlog-viewer.appspot.com`. That viewer mirrors much of historical `chrome://net-internals` (DNS cache, socket pools, live session tables, Reporting, etc.). Lens keeps **events as the primary evidence trail**, then **enriches HTTP/2 sessions** from Chrome’s end-of-capture `polledData` snapshot when present.
 
 ---
 
@@ -17,12 +17,14 @@ It is **not** a full clone of `netlog-viewer.appspot.com`. That viewer mirrors m
 | Area | Source of truth | Notes |
 |------|-----------------|--------|
 | **Sessions** | Events whose `source.type` is `HTTP2_SESSION` or `QUIC_SESSION`, grouped by `source.id` | Session ID = Chromium source id |
-| **Streams / timeline / SETTINGS / flow-control** | Events on that session source (`params.stream_id`, frame types, …) | Ordered history for the capture window |
+| **HTTP/2 snapshot (Phase 1)** | `polledData.spdySessionInfo` merged by `source_id` | **Events**, **Both** (events + snapshot), or **Snap** (snapshot-only) |
+| **Streams / timeline / SETTINGS / flow-control** | Events on that session source (`params.stream_id`, frame types, …) | Hidden for snapshot-only rows (no event stream) |
 | **URL requests** | `URL_REQUEST` (and related) sources, correlated where possible | Overview tables / waterfall / retries — not listed as protocol “Sessions” |
-| **Findings** | Diagnosis rules over event-derived sessions + URL requests | Evidence = event indexes |
-| **DNS / alt-svc / socket pools / queued reports** | Not modeled today | Those usually live under `polledData` in the file; appspot shows them; we ignore that block for now |
+| **Findings / Errors only / swimlanes** | Event-derived sessions only | Snapshot-only rows are excluded from diagnosis and swimlanes |
+| **DNS / alt-svc / socket pools / queued reports** | Not modeled today | Separate Net info (future); not mixed into Sessions |
+| **QUIC polledData** | Not merged yet | Appspot QUIC table uses `quicInfo.sessions` (often `connection_id`, not `source_id`) |
 
-If appspot’s **HTTP/2** or **QUIC** page lists sessions but Lens’s **Sessions** tab is empty, check whether the file has events for `type:HTTP2_SESSION` / `type:QUIC_SESSION`. Snapshot-only rows come from `polledData`, which Lens does not use yet.
+If appspot’s **HTTP/2** page lists sessions that Lens hides by default, enable **Snapshot-only** on Sessions. If those ids still have no events, they are **Snap** rows from `polledData` (see jq below). QUIC snapshot merge is not in Phase 1.
 
 ---
 
@@ -40,7 +42,9 @@ Appspot **Events** also lists **every** NetLog source (`URL_REQUEST`, `SOCKET`, 
 
 ---
 
-## Decision: why events only
+## Decision: events first, polledData second
+
+Events remain the investigation core. `polledData` is an **enrichment**, not a second session model.
 
 ### 1. Causal debugging
 
@@ -48,23 +52,31 @@ Protocol failures are stories: headers → invalid header → RST → GOAWAY →
 
 ### 2. Stable, shareable evidence
 
-Findings, URL hash state (`#?session=…&event=…`), jq helpers, and session MD export all cite **event indexes**. Snapshot tables are harder to reproduce and harder to deep-link.
+Findings, URL hash state (`#?session=…&event=…`), jq helpers, and session MD export all cite **event indexes**. Snapshot fields are labeled **At export** and are not used as evidence indexes.
 
 ### 3. Full history, not “still alive at Stop”
 
-A session that opened, failed, and closed mid-capture still has an `HTTP2_SESSION` / `QUIC_SESSION` source and events. `polledData` often emphasizes connections still present (or remembered) at export time — easy to miss the failure that already finished.
+A session that opened, failed, and closed mid-capture still has an `HTTP2_SESSION` / `QUIC_SESSION` source and events. `polledData` often lists connections still present at export time — useful context, incomplete history.
 
-### 4. One model for the product
+### 4. One diagnosis model
 
-Overview swimlanes, Errors only, diagnosis rules, Search, Compare, and session timelines all run on the **same** event-derived sessions. Mixing in snapshot-only sessions would create two meanings of “session” and muddy filters/status.
+Overview swimlanes, Errors only, and diagnosis rules still run on **event-derived** sessions. Snapshot-only HTTP/2 rows are listed only when **Snapshot-only** is checked; they do not get fake timelines or findings.
 
 ### 5. Product focus
 
-Lens optimizes for **H2/H3 investigation + URL correlation + findings**, not a complete net-internals clone. Event sources of type `HTTP2_SESSION` and `QUIC_SESSION` are the natural unit for that job.
+Lens is for **H2/H3 investigation + URL correlation + findings**, not a full net-internals clone. Phase 1 adds HTTP/2 `spdySessionInfo` because it shares `source_id` with events. QUIC snapshots, DNS, alt-svc, and socket pools stay out of Sessions.
+
+### How merge works (Phase 1)
+
+| `polledData.spdySessionInfo` row | Result in Lens |
+|----------------------------------|----------------|
+| `source_id` matches an event `HTTP2_SESSION` | Origin **Both** — timeline from events; **At export** panel from snapshot |
+| `source_id` has no events | Origin **Snap** — stub row, no timeline; hidden until **Snapshot-only** is on |
+| No `polledData` / no `spdySessionInfo` | Origin **Events** — unchanged |
 
 ### Tradeoff
 
-We forgo appspot’s free **DNS**, **Alternate Service Mappings**, **Queued reports**, and **socket pool** tables until we explicitly parse `polledData`. That is intentional: secondary context, not the core evidence trail. When we add Net info, it should stay clearly labeled as **snapshot**, not as a substitute for Sessions.
+We still omit appspot’s **DNS**, **Alternate Service Mappings**, **Queued reports**, **socket pools**, and **QUIC session tables** until those are designed as Net info (or a later QUIC merge). Snapshot-only HTTP/2 rows close the “appspot has it, Lens doesn’t” gap **without** treating the snapshot as proof.
 
 ---
 
@@ -72,8 +84,9 @@ We forgo appspot’s free **DNS**, **Alternate Service Mappings**, **Queued repo
 
 | Situation | Appspot | Netlog Lens |
 |-----------|---------|-------------|
-| H2/QUIC tabs show sessions; Events has few `HTTP2_SESSION` / `QUIC_SESSION` hits | Snapshot from `polledData` | Sessions empty or sparse |
-| Rich H2/QUIC event streams | Events + optional snapshot | Full Sessions + timeline + findings |
+| H2 tab shows sessions; few `HTTP2_SESSION` events | Snapshot from `spdySessionInfo` | Enable **Snapshot-only**; **Snap** rows, no timeline |
+| H2 events + matching `source_id` in `polledData` | Events + snapshot table | **Both** — timeline + **At export** panel |
+| QUIC tab shows sessions | `quicInfo.sessions` (often `connection_id`) | Event `QUIC_SESSION` sources only (Phase 1 does not merge QUIC snapshots) |
 | Many `URL_REQUEST` / `SOCKET` sources | Visible in Events | Not on Sessions; URLs on Overview when correlated |
 | Need DNS cache / alt-svc / pools | Proxy / DNS / related pages | Not shown yet |
 
@@ -85,7 +98,7 @@ Replace `chrome-net-export-log.json` with your file. Chromium writes HTTP/2 snap
 
 | Result | Meaning |
 |--------|---------|
-| **only_in_polledData** | Appspot H2 table rows with no event stream → Lens will not list them |
+| **only_in_polledData** | Appspot H2 rows with no event stream → Lens **Snap** rows (enable **Snapshot-only**) |
 | **only_in_events** | Closed/historical H2 sessions still in the log → Lens shows them; snapshot often does not |
 | QUIC `polled_quic_sessions` vs `events_quic` | Snapshot **row count** vs unique `QUIC_SESSION` **source ids** — IDs usually do not match |
 
@@ -173,7 +186,7 @@ jq --argjson id 4323812 '
 ' chrome-net-export-log.json
 ```
 
-If `in_events` is `0` but appspot still lists the session, it is snapshot-only (`polledData`). If `in_events` is greater than 0, Lens can model it as a Session (when the source type is `HTTP2_SESSION` or `QUIC_SESSION`).
+If `in_events` is `0` but `in_h2_polled` is greater than 0, Lens can show a **Snap** row (enable **Snapshot-only**). If `in_events` is greater than 0 and the source type is `HTTP2_SESSION` or `QUIC_SESSION`, Lens models an event session; HTTP/2 rows also get **At export** when `in_h2_polled` matches.
 
 See also [README → Extracting a raw event with jq](../README.md#extracting-a-raw-event-with-jq).
 
@@ -182,7 +195,7 @@ See also [README → Extracting a raw event with jq](../README.md#extracting-a-r
 ## Related
 
 - [Guide](guide.md) — file shape (`constants` + `events`), how session ids work
-- [Sessions](sessions.md) — list + detail UI built on event-derived sessions
+- [Sessions](sessions.md) — list + detail (events, Both/Snap badges, ID/host/path filter)
 - [Overview](overview.md) — findings-first dashboard and URL requests
 - [Import](import.md) — loading net-export JSON in the browser
 - External: [NetLog overview](https://www.chromium.org/developers/design-documents/network-stack/netlog/), [netlog-viewer.appspot.com](https://netlog-viewer.appspot.com/)

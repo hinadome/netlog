@@ -25,7 +25,7 @@ When you set a time **brush** on Overview swimlanes, the Sessions list respects 
 
 | Control | Effect |
 |---------|--------|
-| **Filter host or path…** | Case-insensitive substring on host **or** any request path on a stream in that session |
+| **Filter ID, host, or path…** | Case-insensitive substring on **session id**, host, **or** any request path on a stream in that session |
 | **Errors only** | Sessions with **actionable** errors only (see [below](#errors-only-vs-timeline)) — same rule as Overview swimlanes |
 | **All / HTTP/2 / HTTP/3** | Protocol filter |
 | Time brush | When set from Overview, only sessions overlapping the brushed range |

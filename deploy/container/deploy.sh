@@ -3,7 +3,8 @@
 # Does NOT edit host /etc/nginx — only Docker networks/ports.
 #
 # Re-run after git pull to rebuild the app image (Overview layout, Search/Compare, waterfall,
-# retry chains, session tools; certs/env preserved). Use --no-build for gateway-only refresh.
+# retry chains, HTTP/2 polledData merge, Sessions ID/host/path filter, session tools;
+# certs/env preserved). Use --no-build for gateway-only refresh.
 set -euo pipefail
 
 APP_NAME="netlog"

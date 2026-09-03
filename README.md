@@ -7,8 +7,9 @@ Client-only analysis for Chromium **net-export** captures (`chrome://net-export`
 1. Load a netlog JSON file in the browser (parsed in a **Web Worker**).
 2. Resolve numeric event/source/phase codes via the file’s `constants` maps.
 3. Group events by `source.id` into **HTTP2_SESSION** / **QUIC_SESSION** rows.
-4. Build per-session streams from `params.stream_id`, headers, RST/GOAWAY/closes.
-5. Run diagnosis rules and link findings to event indexes for inspection.
+4. Enrich HTTP/2 sessions from **`polledData.spdySessionInfo`** (merge by `source_id`; snapshot-only rows optional).
+5. Build per-session streams from `params.stream_id`, headers, RST/GOAWAY/closes.
+6. Run diagnosis rules (event sessions only) and link findings to event indexes.
 
 ## Quick start
 
@@ -72,10 +73,10 @@ Short index: [deploy/README.md](deploy/README.md).
 
 | Page | Role | Detail |
 |------|------|--------|
-| [Application Concept](docs/concept.md) | Why we use events (vs appspot / `polledData`) | Design decision |
+| [Application Concept](docs/concept.md) | Events first; HTTP/2 `polledData` as snapshot enrichment | vs netlog-viewer.appspot.com |
 | [Import](docs/import.md) | Drop / choose netlog JSON; progress & privacy notes | First screen before analysis |
 | [Overview](docs/overview.md) | Findings-first dashboard: top findings → URL requests → timeline → waterfall → retry chains | Default after parse |
-| [Sessions](docs/sessions.md) | Session list + detail (host/path filter, lifecycle, SETTINGS/GOAWAY, timeline, inspector) | Main drill-down UI |
+| [Sessions](docs/sessions.md) | Session list + detail (ID/host/path filter, snapshot badges, lifecycle, SETTINGS/GOAWAY, timeline) | Main drill-down UI |
 | [Findings](docs/findings.md) | Full finding list with filters and jump-to-evidence | Exportable from top bar |
 | [Search](docs/search.md) | Whole-capture search (`/` shortcut) | Findings, sessions, URLs, events |
 | [Compare](docs/compare.md) | Diff two netlog files | Findings, failed URLs, hosts |
@@ -97,13 +98,24 @@ Shareable links: `#?tab=sessions&session=42&event=1234` (tab, session, event, fi
 
 ### Sessions & errors
 
-On the **Sessions** tab, the top-left search box matches **host or request path** (case-insensitive substring). For example, `/api/` finds every session that carried a stream with that path, even when hosts differ. Paths come from parsed `:path` / request headers on each stream at analysis time.
+On the **Sessions** tab, the list search matches **session ID**, **host**, or **request path** (substring; ID is numeric text, e.g. `4323812`). Paths come from parsed `:path` / request headers on each stream at analysis time.
+
+HTTP/2 **`polledData`** snapshots (Chrome’s table at Stop) are merged by `source_id`:
+
+| Src badge | Meaning |
+|-----------|---------|
+| **Evts** | Event stream only |
+| **Both** | Events + `spdySessionInfo` — **At export** panel on detail |
+| **Snap** | Snapshot only (no events) — hidden until **Snapshot-only** is checked |
+
+Findings, Errors only, and Overview swimlanes still use **event** sessions. Snapshot-only rows have no timeline. See [docs/concept.md](docs/concept.md).
 
 **Errors only** on Sessions and Overview swimlanes uses **actionable** error logic (aligned with timeline **Errors** density). See [docs/sessions.md](docs/sessions.md#errors-only-vs-timeline).
 
 ### Session detail extras
 
 - Stream **lifecycle bars**, **SETTINGS & GOAWAY** panel, **flow-control sparkline** (**Jump to first window update** opens that event in the timeline; switches off **Hide noise** if needed)
+- **At export (polledData)** — HTTP/2 snapshot fields when `spdySessionInfo` matched the session
 - Timeline: H3 **Requests / Control** filters, **First error** jump, `j`/`k` navigation
 - Event inspector: **jq** copy helpers · **Export session MD**
 
@@ -143,10 +155,10 @@ All parsing runs locally. Prefer stripped capture modes; logs can still contain 
 
 ```
 JSON file → Web Worker
-  → parse (constants + events)
+  → parse (constants + events + polledData)
   → index sources
-  → HTTP/2 & QUIC session models + URL request correlation
-  → diagnosis rules
+  → HTTP/2 & QUIC session models + HTTP/2 snapshot merge + URL correlation
+  → diagnosis rules (events only)
   → UI (Overview / Sessions / Findings / Search / Compare / Guide)
 ```
 
@@ -174,7 +186,7 @@ jq '
 
 ## Docs index
 
-- [Application Concept](docs/concept.md) — why events (vs netlog-viewer.appspot.com / `polledData`)
+- [Application Concept](docs/concept.md) — events first vs appspot / `polledData`; Phase 1 HTTP/2 snapshot merge
 - [Import](docs/import.md)
 - [Overview](docs/overview.md)
 - [Sessions](docs/sessions.md)

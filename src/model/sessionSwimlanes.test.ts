@@ -44,6 +44,7 @@ describe('sessionSwimlanes', () => {
       events: [{ index: 10, timeMs: 150, type: 'HTTP2_SESSION', typeId: 1, sourceId: 1, sourceType: 'HTTP2_SESSION', sourceTypeId: 1, phase: 'NONE', params: {} }],
       relatedSourceIds: [],
       hasError: false,
+      origin: 'events',
     },
     {
       id: 2,
@@ -59,6 +60,7 @@ describe('sessionSwimlanes', () => {
       events: [{ index: 20, timeMs: 400, type: 'QUIC_SESSION', typeId: 1, sourceId: 2, sourceType: 'QUIC_SESSION', sourceTypeId: 1, phase: 'NONE', params: {} }],
       relatedSourceIds: [],
       hasError: true,
+      origin: 'events',
     },
   ]
 

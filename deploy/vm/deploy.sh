@@ -3,8 +3,9 @@
 # Owns only: /opt/netlog, sites-available/netlog.conf, /etc/nginx/ssl/netlog/
 #
 # Re-run after git pull to rebuild /opt/netlog/www. Ships: Overview (findings→URLs→timeline→
-# waterfall→retry chains), Search/Compare, session detail tools, Errors only, Sessions filters.
-# Certs reused. Use --skip-build for nginx/TLS-only refresh.
+# waterfall→retry chains), Search/Compare, HTTP/2 polledData merge (Evts/Both/Snap), Sessions
+# ID/host/path filter, session detail tools, Errors only. Certs reused. Use --skip-build for
+# nginx/TLS-only refresh.
 set -euo pipefail
 
 APP_NAME="netlog"

@@ -1,5 +1,6 @@
 import { buildUrlRequests, correlateSessions, type UrlRequestInfo } from '../model/correlate'
 import { buildHttp2Sessions, type ProtocolSession, type SessionStream } from '../model/http2Session'
+import { mergePolledH2IntoSessions } from '../model/mergePolledSessions'
 import { buildQuicSessions } from '../model/quicSession'
 import type { ParsedNetlog } from '../parser/types'
 import type { ParseProgress } from '../parser/readNetlog'
@@ -15,6 +16,8 @@ import { resetHeaderFindingIds, ruleHeaderAnomalies } from './rules/headerRules'
 import { resetQuicFindingIds, ruleQuicConnectionClose, ruleQuicHandshake } from './rules/quicRules'
 import { resetTlsFindingIds, ruleTlsAlpn } from './rules/tlsRules'
 import type { AnalysisResult, Finding, SessionSummary, UrlRequestSummary } from './types'
+import type { PolledH2Session } from '../model/polledData'
+import type { SessionOrigin } from '../model/sessionOrigin'
 
 const SEVERITY_ORDER: Record<Finding['severity'], number> = {
   critical: 0,
@@ -42,6 +45,8 @@ export interface TransferSession {
   quicVersion?: string
   connectionIds?: string[]
   connectionClose?: ProtocolSession['connectionClose']
+  origin: SessionOrigin
+  polledSnapshot?: PolledH2Session
 }
 
 export interface TransferAnalysis {
@@ -53,6 +58,10 @@ export interface TransferAnalysis {
   sessionSummaries: SessionSummary[]
   sessions: TransferSession[]
   urlRequests: UrlRequestSummary[]
+  /** HTTP/2 sessions present only in polledData (no event stream). */
+  polledOnlySessionCount: number
+  /** Event sessions that also have a polledData snapshot attached. */
+  polledEnrichedCount: number
 }
 
 function toUrlRequestSummary(req: UrlRequestInfo): UrlRequestSummary {
@@ -86,6 +95,11 @@ function collectSessionPaths(s: ProtocolSession): string[] {
 }
 
 function toSummary(s: ProtocolSession): SessionSummary {
+  const origin = s.origin ?? 'events'
+  const streamCount =
+    origin === 'polledOnly' && s.polledSnapshot?.activeStreams != null
+      ? s.polledSnapshot.activeStreams
+      : s.streams.size
   return {
     id: s.id,
     protocol: s.protocol,
@@ -94,11 +108,13 @@ function toSummary(s: ProtocolSession): SessionSummary {
     proxy: s.proxy,
     startTimeMs: s.startTimeMs,
     endTimeMs: s.endTimeMs,
-    streamCount: s.streams.size,
+    streamCount,
     hasError: s.hasError,
     error: s.error,
     negotiatedProtocol: s.negotiatedProtocol,
     quicVersion: s.quicVersion,
+    origin,
+    polledActiveStreams: s.polledSnapshot?.activeStreams,
   }
 }
 
@@ -122,6 +138,8 @@ function toTransfer(s: ProtocolSession): TransferSession {
     quicVersion: s.quicVersion,
     connectionIds: s.connectionIds,
     connectionClose: s.connectionClose,
+    origin: s.origin ?? 'events',
+    polledSnapshot: s.polledSnapshot,
   }
 }
 
@@ -135,7 +153,11 @@ export function runDiagnosis(
   resetHeaderFindingIds()
   resetTlsFindingIds()
 
-  const http2Sessions = buildHttp2Sessions(parsed)
+  const http2Built = buildHttp2Sessions(parsed)
+  const { sessions: http2Sessions, polledOnlyCount, enrichedCount } = mergePolledH2IntoSessions(
+    http2Built,
+    parsed.polledData,
+  )
   onProgress?.({ stage: 'modeling', percent: 97, message: 'Building QUIC sessions…' })
   const quicSessions = buildQuicSessions(parsed)
   const allSessions = [...http2Sessions, ...quicSessions]
@@ -176,6 +198,8 @@ export function runDiagnosis(
     findings,
     sessionSummaries: allSessions.map(toSummary),
     urlRequests: [...urlRequests.values()].map(toUrlRequestSummary),
+    polledOnlySessionCount: polledOnlyCount,
+    polledEnrichedCount: enrichedCount,
   }
 }
 
@@ -189,6 +213,8 @@ export function toTransferAnalysis(result: AnalysisResult): TransferAnalysis {
     sessionSummaries: result.sessionSummaries,
     sessions: [...result.http2Sessions, ...result.quicSessions].map(toTransfer),
     urlRequests: result.urlRequests,
+    polledOnlySessionCount: result.polledOnlySessionCount,
+    polledEnrichedCount: result.polledEnrichedCount,
   }
 }
 

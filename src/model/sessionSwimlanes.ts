@@ -67,6 +67,8 @@ export function buildSessionSwimlanes(
   const rows: SessionSwimlaneRow[] = []
 
   for (const summary of summaries) {
+    if (summary.origin === 'polledOnly') continue
+
     const session = byId.get(summary.id)
     const sessionFindings = findingsBySession.get(summary.id) ?? []
     if (options?.errorsOnly && !sessionQualifiesForErrorsFilter(session, sessionFindings)) continue

@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TransferSession } from '../diagnosis/runDiagnosis'
 import type { Finding } from '../diagnosis/types'
 import { findFirstActionableErrorIndex } from '../model/sessionIssues'
+import { originBadgeModifier, sessionOriginLabel } from '../model/sessionOrigin'
 import { classifyStreamId, countStreamKinds } from '../model/streamKind'
 import type { NetlogEvent } from '../parser/types'
 import { EventInspector } from './EventInspector'
 import { exportSessionNarrative } from './exportFindings'
 import { FindingsPanel } from './FindingsPanel'
 import { FlowControlSparkline } from './FlowControlSparkline'
+import { PolledSessionPanel } from './PolledSessionPanel'
 import { ProtocolDiffPanel } from './ProtocolDiffPanel'
 import { Timeline } from './Timeline'
 import { StreamLifecycleBars } from './StreamLifecycleBars'
@@ -58,6 +60,8 @@ export function SessionDetail({
   const isH3 = session.protocol === 'h3'
   const guideAnchor = isH3 ? 'guide-http3-streams' : 'guide-http2-streams'
 
+  const isPolledOnly = session.origin === 'polledOnly'
+
   const firstErrorIndex = useMemo(
     () => findFirstActionableErrorIndex(session, findings),
     [session, findings],
@@ -100,6 +104,9 @@ export function SessionDetail({
             {session.proxy && session.proxy !== 'none' ? ` · proxy ${session.proxy}` : ''}
             {session.error ? ` · ${session.error}` : ''}
           </p>
+          <span className={`session-origin-badge ${originBadgeModifier(session.origin)}`}>
+            {sessionOriginLabel(session.origin)}
+          </span>
           <div
             className="stream-kind-chips"
             aria-label={`${session.protocol.toUpperCase()} stream kind counts`}
@@ -168,33 +175,43 @@ export function SessionDetail({
         </button>
       </header>
 
-      <ProtocolDiffPanel session={session} onJumpToEvent={jumpToIndex} />
+      {session.polledSnapshot && (
+        <PolledSessionPanel snapshot={session.polledSnapshot} origin={session.origin} />
+      )}
 
-      <FlowControlSparkline
-        session={session}
-        baseTimeMs={session.startTimeMs}
-        onJumpToEvent={jumpToIndex}
-      />
+      {!isPolledOnly && (
+        <>
+          <ProtocolDiffPanel session={session} onJumpToEvent={jumpToIndex} />
 
-      <TransportModel
-        session={session}
-        onOpenGuide={
-          onOpenStreamGuide ? () => onOpenStreamGuide('guide-transport-model') : undefined
-        }
-      />
+          <FlowControlSparkline
+            session={session}
+            baseTimeMs={session.startTimeMs}
+            onJumpToEvent={jumpToIndex}
+          />
 
-      <StreamLifecycleBars
-        session={session}
-        streamFilter={streamFilter}
-        onSelectStream={(streamId, eventIndex) => {
-          setStreamFilter((prev) => (prev === streamId ? 'all' : streamId))
-          if (eventIndex !== undefined) {
-            const ev = session.events.find((e) => e.index === eventIndex)
-            if (ev) setSelected(ev)
-          }
-        }}
-      />
+          <TransportModel
+            session={session}
+            onOpenGuide={
+              onOpenStreamGuide ? () => onOpenStreamGuide('guide-transport-model') : undefined
+            }
+          />
 
+          <StreamLifecycleBars
+            session={session}
+            streamFilter={streamFilter}
+            onSelectStream={(streamId, eventIndex) => {
+              setStreamFilter((prev) => (prev === streamId ? 'all' : streamId))
+              if (eventIndex !== undefined) {
+                const ev = session.events.find((e) => e.index === eventIndex)
+                if (ev) setSelected(ev)
+              }
+            }}
+          />
+        </>
+      )}
+
+      {!isPolledOnly && (
+        <>
       <div className="session-grid">
         <section className="panel">
           <h3>Streams ({session.streams.length})</h3>
@@ -318,6 +335,8 @@ export function SessionDetail({
           />
         </div>
       </section>
+        </>
+      )}
     </div>
   )
 }
