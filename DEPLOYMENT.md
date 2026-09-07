@@ -99,7 +99,7 @@ Re-run the **same** TLS mode command after pulling new code. The script runs `np
 - **Search** and **Compare** tabs, shareable `#?tab=…` URL state, keyboard shortcuts
 - Session detail: SETTINGS/GOAWAY, flow-control sparkline, H3 timeline filters, jq helpers, session MD export, **At export (polledData)** for HTTP/2
 - Sessions: **ID / host / path** filter; **Evts / Both / Snap** source badges; **Snapshot-only** rows (HTTP/2 `spdySessionInfo`, off by default)
-- Findings filters; actionable **Errors only**; events-first analysis with optional HTTP/2 snapshot merge ([docs/concept.md](docs/concept.md))
+- Findings filters; actionable **Errors only**; `quic-rst` severity aligned with `h2-rst` (Status ↔ Session findings); events-first analysis with optional HTTP/2 snapshot merge ([docs/concept.md](docs/concept.md))
 
 Certificates are reused unless you pass `--force-self-signed` or `--force-certbot`. Use `--skip-build` only when you intentionally want to keep the existing `www` tree.
 
@@ -172,7 +172,7 @@ Certbot runs in a one-shot container sharing the ACME webroot volume with `gatew
 
 ### Repeatable upgrade
 
-Re-run the deploy script after `git pull` to rebuild the Docker image and refresh static assets (findings-first Overview, Search/Compare, waterfall, retry chains, HTTP/2 polledData merge, Sessions ID/host/path filter). Omit `--no-build` unless you only changed nginx/TLS config.
+Re-run the deploy script after `git pull` to rebuild the Docker image and refresh static assets (findings-first Overview, Search/Compare, waterfall, retry chains, HTTP/2 polledData merge, Sessions ID/host/path filter, QUIC RST finding severity aligned with Sessions Status). Omit `--no-build` unless you only changed nginx/TLS config.
 
 ```bash
 ./deploy/container/deploy.sh --domain netlog.example.com --self-signed

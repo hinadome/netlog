@@ -93,7 +93,9 @@ Lens distinguishes **actionable** errors (investigation targets) from **benign**
 | **Status: warning** | Internal `hasError` and/or **warning** findings (flow control, PING) — not Errors only |
 | Timeline **Errors** density | Actionable error-like catalog events + finding evidence |
 
-**Benign (excluded from Errors only):** `QUIC_SESSION_CLOSED`; RST/reset with `NO_ERROR` or `CANCEL` (codes 0 / 8); ok HTTP/2 session close.
+**Benign (excluded from Errors only):** `QUIC_SESSION_CLOSED`; RST/reset with `NO_ERROR` or client `CANCEL` (codes 0 / 8); ok HTTP/2 session close.
+
+**Stream reset findings** (`h2-rst`, `quic-rst`): `PROTOCOL_ERROR` → `critical`; client `CANCEL` / `NO_ERROR` → `info`; peer `CANCEL` or other non-benign codes → `error`. Sessions **Status** `error` matches these error/critical findings plus actionable timeline events.
 
 `summary.hasError` on the session model can still be true for softer cases — that is why the list can show **warning** while Errors only hides the row.
 

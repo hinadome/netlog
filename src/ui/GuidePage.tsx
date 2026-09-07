@@ -377,11 +377,38 @@ HTTP2_SESSION source.id = 218
             <code>QUIC_SESSION_CLOSED</code> — normal QUIC connection end
           </li>
           <li>
-            RST / reset with <code>NO_ERROR</code> or <code>CANCEL</code> (HTTP/2 error codes{' '}
+            RST / reset with <code>NO_ERROR</code> or client <code>CANCEL</code> (HTTP/2 error codes{' '}
             <code>0</code> and <code>8</code>)
           </li>
           <li>HTTP/2 session close with ok net error</li>
         </ul>
+        <h3>Stream reset findings (<code>h2-rst</code>, <code>quic-rst</code>)</h3>
+        <p>
+          HTTP/2 and QUIC stream resets use the same severity tiers so Sessions <strong>Status</strong>{' '}
+          matches Session findings:
+        </p>
+        <table className="guide-table">
+          <thead>
+            <tr>
+              <th>Reset</th>
+              <th>Finding severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PROTOCOL_ERROR</code></td>
+              <td><span className="err-tag">critical</span></td>
+            </tr>
+            <tr>
+              <td>Client <code>CANCEL</code> or <code>NO_ERROR</code></td>
+              <td>info</td>
+            </tr>
+            <tr>
+              <td>Peer <code>CANCEL</code> or other non-benign codes</td>
+              <td><span className="err-tag">error</span></td>
+            </tr>
+          </tbody>
+        </table>
         <div className="guide-callout">
           <strong>Why a session might look “clean” on the timeline.</strong> Default density is{' '}
           <strong>Hide noise</strong>, which hides routine WINDOW_UPDATE and ping traffic. Warning

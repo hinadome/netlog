@@ -81,6 +81,8 @@ Paths are collected from request headers on streams (`:path`) when the netlog is
 
 **Timeline alignment:** Session detail → **Errors** density shows the same class of protocol events (plus finding evidence). Default **Hide noise** still hides routine WINDOW_UPDATE / ping chatter — so use **All** or **Search all** if you need to see everything.
 
+**Findings alignment:** Non-benign QUIC stream resets (`quic-rst`) use the same severity tiers as HTTP/2 `h2-rst` (`critical` / `error` / `info`), so Sessions **Status** `error` should match error-level findings in the Session findings panel.
+
 If a session appears under Errors only, you should see at least one critical/error finding marker or a red-styled event under timeline **Errors**. If not, file a bug with the session id.
 
 ---

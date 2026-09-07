@@ -38,6 +38,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Fixed
 
+- **QUIC stream reset findings** (`quic-rst`) — severity now mirrors `h2-rst` (`critical` / `error` / `info`), so Sessions **Status**, Errors only, timeline **Errors**, and Session findings agree for non-benign QUIC resets (previously `quic-rst` was `warning` while the list showed `error`)
 - **Jump to first window update** (flow-control sparkline) selects the first `WINDOW_UPDATE` event, scrolls the timeline into view, and switches density to **All** when Hide noise would hide it; other external jumps (SETTINGS/GOAWAY, findings, First error) reveal filtered targets the same way
 - **Errors only** (Overview swimlanes + Sessions list) and **Sessions w/ errors** stat use **actionable** error logic aligned with timeline **Errors** density
 - `summary.hasError` no longer drives Errors-only filtering alone
@@ -47,7 +48,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Documentation
 
 - [docs/concept.md](docs/concept.md), [README.md](README.md) — events-first concept plus Phase 1 HTTP/2 `polledData` merge (Both / Snap badges, At export panel)
-- [DEPLOYMENT.md](DEPLOYMENT.md), [deploy/README.md](deploy/README.md), VM/container `deploy.sh` comments — upgrade notes for polledData merge and Sessions ID filter
+- [DEPLOYMENT.md](DEPLOYMENT.md), [deploy/README.md](deploy/README.md), VM/container `deploy.sh` comments — upgrade notes for polledData merge, Sessions ID filter, QUIC RST severity alignment
 - [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — including flow-control jump / timeline reveal
 - In-app **Guide** — “Errors & filters” section
 

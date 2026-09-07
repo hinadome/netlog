@@ -70,13 +70,34 @@ export function ruleQuicConnectionClose(sessions: ProtocolSession[]): Finding[] 
             ? ev.params.quic_stream_id
             : undefined
       const code = String(ev.params.quic_rst_stream_error ?? ev.params.error_code ?? 'RST')
+      const isProtocol = /PROTOCOL_ERROR|\(1\)|^1\b/i.test(code)
+      const isCancel = /CANCEL|\(8\)|^8\b/i.test(code)
+      const isNoError = /NO_ERROR|\(0\)|^0\b/i.test(code)
+      const isClient = ev.type.includes('SEND') || ev.type.includes('SENT')
+      const direction = isClient ? 'Client sent' : 'Peer sent'
+      // Mirror h2-rst: PROTOCOL_ERROR → critical; client CANCEL / NO_ERROR → info; else error.
+      const severity = isProtocol
+        ? 'critical'
+        : isNoError || (isCancel && isClient)
+          ? 'info'
+          : 'error'
+
       findings.push({
         id: nextId('quic-rst'),
         ruleId: 'quic-rst',
-        severity: /NO_ERROR|CANCEL/i.test(code) ? 'info' : 'warning',
-        title: `QUIC stream reset ${code}${streamId !== undefined ? ` (stream ${streamId})` : ''}`,
-        explanation: `Stream was reset via ${ev.type}.`,
-        suggestion: 'Link to the URL_REQUEST for this stream and check whether the application aborted or the peer rejected the request.',
+        severity,
+        title: `${direction} QUIC stream reset ${code}${streamId !== undefined ? ` (stream ${streamId})` : ''}`,
+        explanation: [
+          `Stream was reset via ${ev.type}.`,
+          isProtocol
+            ? 'PROTOCOL_ERROR usually means a framing or header violation was detected on this stream.'
+            : isCancel
+              ? 'CANCEL means the sender aborted the stream (often navigation cancel, timeout, or intentional abort)—not necessarily a protocol bug.'
+              : 'Inspect surrounding HEADERS/DATA frames and any linked URL_REQUEST net error.',
+        ].join(' '),
+        suggestion: isProtocol
+          ? 'Inspect the previous events on this stream for bad headers or unexpected frames; fix the peer that emitted bad data.'
+          : 'Link to the URL_REQUEST for this stream and check whether the application aborted or the peer rejected the request.',
         sessionId: session.id,
         protocol: 'h3',
         streamId,

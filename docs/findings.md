@@ -58,10 +58,21 @@ Filenames are derived from the netlog name. Downloads stay local (blob download)
 | `h2-flow-control` | Likely flow-control stalls |
 | `h2-ping` | Unacked PINGs |
 | `url-net-error` | URL requests with `ERR_HTTP2_*` / `ERR_QUIC_*` (and related) |
-| `quic-close` / `quic-rst` / `quic-handshake` | QUIC connection close, stream RST, handshake failure |
+| `quic-close` / `quic-handshake` | QUIC connection close, handshake failure |
+| `quic-rst` | QUIC stream reset (same severity tiers as `h2-rst`) |
 | `tls-handshake-fail` / `tls-alpn-unexpected` / `tls-negotiated` | TLS handshake and ALPN |
 
-See [README](../README.md#diagnosis-high-level) for severity semantics.
+### Stream reset severity (`h2-rst`, `quic-rst`)
+
+| Reset code / direction | Finding severity |
+|------------------------|------------------|
+| `PROTOCOL_ERROR` | `critical` |
+| Client `CANCEL` or `NO_ERROR` | `info` |
+| Peer `CANCEL` or other non-benign codes | `error` |
+
+These tiers align with Sessions **Status** `error` and **Errors only** filtering.
+
+See [README](../README.md#diagnosis-high-level) for the full rule list.
 
 ## Related
 

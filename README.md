@@ -130,7 +130,7 @@ Details: [docs/sessions.md](docs/sessions.md#flow-control-window).
 | **Status: warning** | Session still has `hasError` from softer signals or **warning** findings (e.g. flow control, PING) — visible in the list but not in Errors only |
 | **Timeline Errors** | Catalog `critical` / `error` severity or `category === error`, minus benign closes/resets; **Hide noise** (default) hides routine chatter |
 
-If Errors only lists a session but the timeline looks empty, switch density to **All** or use **Search all** — you may have a warning-level finding or a hidden noise event. After the actionable-error fix, that mismatch should be rare.
+Sessions **Status** `error` should match critical/error findings on that session (e.g. non-benign QUIC stream resets use the same tiers as HTTP/2 `h2-rst`). If Errors only lists a session but the timeline looks empty, switch density to **All** or use **Search all** — a hidden noise event may still qualify.
 
 ## Diagnosis (high level)
 
@@ -141,11 +141,14 @@ If Errors only lists a session but the timeline looks empty, switch density to *
 | `h2-flow-control` | Likely flow-control stalls |
 | `h2-ping` | Unacked PINGs |
 | `url-net-error` | URL requests with `ERR_HTTP2_*` / `ERR_QUIC_*` (and related) |
-| `quic-close` / `quic-rst` / `quic-handshake` | QUIC connection close, stream RST, handshake failure |
+| `quic-close` / `quic-handshake` | QUIC connection close, handshake failure |
+| `quic-rst` | QUIC stream reset — same severity tiers as `h2-rst` (see below) |
 | `h2-header-duplicate` / `h2-header-case` / `h2-header-authority` | Malformed or duplicate HTTP/2 pseudo-headers |
 | `tls-handshake-fail` / `tls-alpn-unexpected` / `tls-negotiated` | TLS handshake errors and ALPN negotiation |
 
 Severities: `critical` · `error` · `warning` · `info`.
+
+**Stream reset findings** (`h2-rst`, `quic-rst`): `PROTOCOL_ERROR` → `critical`; client `CANCEL` / `NO_ERROR` → `info`; peer `CANCEL` or other non-benign codes → `error`.
 
 ## Privacy
 
