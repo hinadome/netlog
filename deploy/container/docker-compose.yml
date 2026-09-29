@@ -11,7 +11,7 @@ services:
       - internal
 
   gateway:
-    image: nginx:1.27-alpine
+    image: nginx:1.31.2-alpine3.23-slim
     restart: unless-stopped
     depends_on:
       - app

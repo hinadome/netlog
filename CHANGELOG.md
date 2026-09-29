@@ -35,6 +35,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - **Overview layout** (findings-first): Top findings → URL requests → Session timeline → Request waterfall → Retry chains (stats row unchanged at top)
 - Sessions **Status** column: `error` (actionable), `warning` (benign `hasError` or warning findings), or `ok`
 - Session model: benign RST/CANCEL and normal QUIC close no longer set `hasError` on streams/sessions
+- Container nginx base: `nginx:1.27-alpine` → **`nginx:1.31.2-alpine3.23-slim`** in `deploy/container/Dockerfile` (app) and `deploy/container/docker-compose.yml` (gateway)
+
+### Security
+
+- Upgraded container nginx images from `1.27-alpine` to `1.31.2-alpine3.23-slim` to clear known base-image CVEs on the old tag
+- App image installs `wget` via `apk` solely for the existing HEALTHCHECK (`alpine-slim` does not include wget)
 
 ### Fixed
 
@@ -48,9 +54,9 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 ### Documentation
 
 - [docs/concept.md](docs/concept.md), [README.md](README.md) — events-first concept plus Phase 1 HTTP/2 `polledData` merge (Both / Snap badges, At export panel)
-- [DEPLOYMENT.md](DEPLOYMENT.md), [deploy/README.md](deploy/README.md), VM/container `deploy.sh` comments — upgrade notes for polledData merge, Sessions ID filter, QUIC RST severity alignment
+- [DEPLOYMENT.md](DEPLOYMENT.md), [deploy/README.md](deploy/README.md), `deploy/container/deploy.sh` — container nginx `1.31.2-alpine3.23-slim`, polledData merge, Sessions ID filter, QUIC RST severity alignment
 - [docs/overview.md](docs/overview.md), [docs/findings.md](docs/findings.md), [docs/search.md](docs/search.md), [docs/compare.md](docs/compare.md), [docs/sessions.md](docs/sessions.md), [docs/guide.md](docs/guide.md) — including flow-control jump / timeline reveal
-- In-app **Guide** — “Errors & filters” section
+- In-app **Guide** — “Errors & filters” section and stream-reset severity (`h2-rst` / `quic-rst`)
 
 ### Planned / not yet implemented
 

@@ -17,4 +17,4 @@ sudo ./deploy/vm/deploy.sh --domain netlog.example.com --no-tls
 ./deploy/container/deploy.sh --domain netlog.example.com --no-tls
 ```
 
-**Upgrade after app changes:** re-run the deploy script (omit `--no-build` on container) so `npm run build` ships the latest UI — Overview findings-first layout, Search/Compare, URL waterfall & retry chains (brush-aware), HTTP/2 `polledData` session merge (Evts/Both/Snap), Sessions ID/host/path filter, QUIC RST findings aligned with Sessions Status, session detail tools, Findings filters, actionable **Errors only**. TLS certs and `.env.production` are preserved on re-run.
+**Upgrade after app changes:** re-run the deploy script (omit `--no-build` on container) so `npm run build` ships the latest UI and Compose pulls `nginx:1.31.2-alpine3.23-slim` for gateway / app base. TLS certs and `.env.production` are preserved on re-run.

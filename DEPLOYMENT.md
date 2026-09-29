@@ -194,8 +194,10 @@ Re-run the deploy script after `git pull` to rebuild the Docker image and refres
 
 | Service | Role |
 |---------|------|
-| `app` | Multi-stage image: build SPA, serve on `:8080` (internal) |
-| `gateway` | nginx FrontendGateway on host `80`/`443` |
+| `app` | Multi-stage image: build SPA, serve on `:8080` (internal); base `nginx:1.31.2-alpine3.23-slim` |
+| `gateway` | nginx FrontendGateway on host `80`/`443`; image `nginx:1.31.2-alpine3.23-slim` |
+
+Both use the official slim Alpine tag (smaller OS surface than `1.27-alpine`). The app Dockerfile adds `wget` only for the container HEALTHCHECK. Gateway mounts config/certs only — no extra packages. Re-run `./deploy/container/deploy.sh …` (without `--no-build`) so Compose pulls the new gateway image and rebuilds `app`.
 
 ### Volumes and certificates
 
